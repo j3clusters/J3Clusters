@@ -26,8 +26,9 @@ export default function ResetPasswordPage() {
             </p>
           </div>
           <ResetPasswordForm />
-          <p className="portal-auth-alt">
-            Wrong place? <Link href="/login">Sign in</Link>
+          <p className="portal-auth-alt portal-auth-forgot">
+            <span className="portal-auth-forgot-hint">Wrong place?</span>
+            <Link href="/login">Sign in</Link>
           </p>
         </div>
       </main>

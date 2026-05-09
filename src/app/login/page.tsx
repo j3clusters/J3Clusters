@@ -89,9 +89,9 @@ export default function LoginPage() {
             {pending ? "Signing in..." : "Sign in"}
           </button>
         </form>
-        <p className="portal-auth-alt">
-          <Link href="/forgot-password">Forgot password?</Link> — recover or reset via
-          email
+        <p className="portal-auth-alt portal-auth-forgot">
+          <Link href="/forgot-password">Forgot password?</Link>
+          <span className="portal-auth-forgot-hint">Recover or reset via email.</span>
         </p>
         <div className="portal-auth-footer">
           New user? <Link href="/register">Create an account</Link>

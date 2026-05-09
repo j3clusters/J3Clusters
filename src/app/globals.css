@@ -2278,6 +2278,10 @@ button:focus-visible,
   color: #991b1b;
 }
 
+.owner-form-message.is-multiline {
+  white-space: pre-line;
+}
+
 .portal-btn-ghost {
   background: rgba(255, 255, 255, 0.15) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
@@ -2368,6 +2372,35 @@ button:focus-visible,
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
+}
+
+/* Auth cards: secondary row (login / recovery / reset) — inset matches form */
+.portal-auth-card > .portal-auth-alt.portal-auth-forgot {
+  margin: 0;
+  margin-top: 0;
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.portal-auth-card > .portal-auth-alt.portal-auth-forgot a {
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.portal-auth-card > .portal-auth-alt.portal-auth-forgot a:hover {
+  text-decoration: underline;
+}
+
+.portal-auth-forgot-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 
 /* —— Admin portal —— */

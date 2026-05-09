@@ -4,7 +4,10 @@ import { NextResponse } from "next/server";
 
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { prisma } from "@/lib/prisma";
-import { sendPasswordResetEmail } from "@/lib/password-reset-email";
+import {
+  isPasswordEmailConfigured,
+  sendPasswordResetEmail,
+} from "@/lib/password-reset-email";
 import { passwordResetRequestSchema } from "@/lib/validators";
 
 const GENERIC_MESSAGE =
@@ -33,10 +36,29 @@ export async function POST(request: Request) {
   const email = parsed.data.email.trim().toLowerCase();
 
   try {
+    if (process.env.NODE_ENV === "production" && !isPasswordEmailConfigured()) {
+      await delay(350);
+      return NextResponse.json(
+        {
+          error:
+            "Password recovery email is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL on the server, then try again.",
+        },
+        { status: 503 },
+      );
+    }
+
     const user = await prisma.appUser.findUnique({
       where: { email },
       select: { id: true, email: true },
     });
+
+    const emailConfigured = isPasswordEmailConfigured();
+    let setupHint: string | undefined;
+
+    if (!emailConfigured && process.env.NODE_ENV !== "production") {
+      setupHint =
+        "Email is not configured (add RESEND_API_KEY and RESEND_FROM_EMAIL to .env.local). For a registered account, the reset link is also printed in the terminal where the dev server runs.";
+    }
 
     if (user) {
       await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
@@ -50,24 +72,26 @@ export async function POST(request: Request) {
       });
 
       const resetUrl = `${getAppBaseUrl()}/reset-password?token=${encodeURIComponent(rawToken)}`;
-      const sent = await sendPasswordResetEmail(user.email, resetUrl);
+      const sendResult = await sendPasswordResetEmail(user.email, resetUrl);
 
-      if (!sent) {
+      if (!sendResult.ok) {
         if (process.env.NODE_ENV !== "production") {
           console.info(
-            `[dev] Password recovery link (set RESEND_API_KEY and RESEND_FROM_EMAIL to email users): ${resetUrl}`,
+            `[password-reset] ${sendResult.reason} Recovery link for ${user.email}: ${resetUrl}`,
           );
         } else {
           await prisma.passwordResetToken.delete({ where: { tokenHash } });
-          console.warn(
-            "Password recovery: RESEND_API_KEY / RESEND_FROM_EMAIL not configured; email not sent.",
-          );
+          console.error("[password-reset] Email not sent:", sendResult.reason);
         }
       }
     }
 
     await delay(350);
-    return NextResponse.json({ ok: true, message: GENERIC_MESSAGE });
+    return NextResponse.json({
+      ok: true,
+      message: GENERIC_MESSAGE,
+      ...(setupHint ? { setupHint } : {}),
+    });
   } catch {
     await delay(350);
     return NextResponse.json({ ok: true, message: GENERIC_MESSAGE });

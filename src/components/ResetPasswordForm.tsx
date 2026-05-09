@@ -129,9 +129,6 @@ export function ResetPasswordForm() {
           {pending ? "Updating…" : "Update password"}
         </button>
       </form>
-      <div className="portal-auth-footer">
-        <Link href="/login">Back to sign in</Link>
-      </div>
     </>
   );
 }

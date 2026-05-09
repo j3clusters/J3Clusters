@@ -15,8 +15,9 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
         <ForgotPasswordForm />
-        <p className="portal-auth-alt">
-          Remember your password? <Link href="/login">Sign in</Link>
+        <p className="portal-auth-alt portal-auth-forgot">
+          <span className="portal-auth-forgot-hint">Remember your password?</span>
+          <Link href="/login">Sign in</Link>
         </p>
       </div>
     </main>

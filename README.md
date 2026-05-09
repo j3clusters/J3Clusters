@@ -59,9 +59,10 @@ The seed script loads initial published listings from `src/data/listings.ts`, th
 
 1. Provision **PostgreSQL** (Vercel Postgres, Neon, RDS, etc.) and set `DATABASE_URL` in the host’s environment.
 2. Set **`NEXT_PUBLIC_APP_URL`** to your public origin (for example `https://your-domain.com`) so password recovery links point to your site.
-3. Configure **[Resend](https://resend.com)** (or rely on dev-only behavior): set **`RESEND_API_KEY`** and **`RESEND_FROM_EMAIL`** so owners receive recovery emails. Without these in production, reset requests succeed silently but no email is sent.
-4. Set **`USER_JWT_SECRET`** and **`ADMIN_JWT_SECRET`** (each 32+ random characters) in production.
-5. Deploy the Next.js app (for example **Vercel**: connect the repo, add env vars, deploy). After the first deploy, run **`npx prisma db push`** against production (or use migrations) so the schema includes `PasswordResetToken`.
+3. Configure **[Resend](https://resend.com)**: set **`RESEND_API_KEY`** and **`RESEND_FROM_EMAIL`**. In production, forgot-password returns **503** until both are set, so misconfiguration is obvious. In development, the API shows a **setup hint** and prints the reset URL in the **terminal** when email is not configured.
+4. **Password reset email troubleshooting**: Use a **verified sender domain** in Resend (or their test `onboarding@resend.dev`, which only delivers to **your own** Resend-account email). Check the **spam** folder. Watch **server logs** for `[password-reset] Resend API error` if the API rejects the send. Ensure **`NEXT_PUBLIC_APP_URL`** matches your live site so links in the email are correct.
+5. Set **`USER_JWT_SECRET`** and **`ADMIN_JWT_SECRET`** (each 32+ random characters) in production.
+6. Deploy the Next.js app (for example **Vercel**: connect the repo, add env vars, deploy). After the first deploy, run **`npx prisma db push`** against production (or use migrations) so the schema includes `PasswordResetToken`.
 
 ```bash
 DATABASE_URL="postgresql://…" npx prisma db push
