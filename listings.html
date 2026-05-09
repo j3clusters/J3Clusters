@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listings | J3 Clusters</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="./index.html">J3 Clusters</a>
+        <nav>
+          <ul class="nav-list">
+            <li><a href="./listings.html">Buy</a></li>
+            <li><a href="./listings.html">Rent</a></li>
+            <li><a href="./post-property.html">Post Property</a></li>
+            <li><a href="./contact.html">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container section">
+      <div class="section-head">
+        <h1>Property listings</h1>
+        <p id="result-count"></p>
+      </div>
+
+      <div class="filters">
+        <label>
+          Type
+          <select id="type-filter">
+            <option value="">Any</option>
+            <option value="Apartment">Apartment</option>
+            <option value="Villa">Villa</option>
+            <option value="Plot">Plot</option>
+          </select>
+        </label>
+        <label>
+          City
+          <input id="city-filter" type="text" placeholder="City name" />
+        </label>
+        <label>
+          Max Budget (INR)
+          <input id="budget-filter" type="number" min="0" step="100000" />
+        </label>
+        <button id="apply-filters" type="button">Apply</button>
+      </div>
+
+      <div class="card-grid" id="listing-grid"></div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <p>&copy; 2026 J3 Clusters. All rights reserved.</p>
+        <a href="./contact.html">Talk to us</a>
+      </div>
+    </footer>
+
+    <script src="./scripts/data.js"></script>
+    <script src="./scripts/listings.js"></script>
+  </body>
+</html>

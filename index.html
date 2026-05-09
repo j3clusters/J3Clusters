@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>J3 Clusters | Find Your Property</title>
+    <meta
+      name="description"
+      content="Find verified properties across apartments, villas, and plots with J3 Clusters."
+    />
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="brand" href="./index.html">J3 Clusters</a>
+        <nav>
+          <ul class="nav-list">
+            <li><a href="./listings.html">Buy</a></li>
+            <li><a href="./listings.html">Rent</a></li>
+            <li><a href="./post-property.html">Post Property</a></li>
+            <li><a href="./contact.html">Contact</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container">
+          <p class="pill">Trusted local property platform</p>
+          <h1>Find a home that fits your life</h1>
+          <p class="hero-copy">
+            Search verified apartments, villas, and plots in your preferred
+            neighborhood with transparent pricing.
+          </p>
+
+          <form class="search-card" action="./listings.html" method="get">
+            <div class="field-grid">
+              <label>
+                City
+                <input type="text" name="city" placeholder="Ex: Chennai" />
+              </label>
+              <label>
+                Property Type
+                <select name="type">
+                  <option value="">Any</option>
+                  <option value="Apartment">Apartment</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Plot">Plot</option>
+                </select>
+              </label>
+              <label>
+                Budget
+                <select name="budget">
+                  <option value="">Any</option>
+                  <option value="0-5000000">Up to 50L</option>
+                  <option value="5000000-10000000">50L - 1Cr</option>
+                  <option value="10000000-30000000">1Cr - 3Cr</option>
+                </select>
+              </label>
+              <button type="submit">Search</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="section container">
+        <div class="section-head">
+          <h2>Featured listings</h2>
+          <a href="./listings.html">View all</a>
+        </div>
+        <div class="card-grid" id="featured-listings"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-wrap">
+        <p>&copy; 2026 J3 Clusters. All rights reserved.</p>
+        <a href="./contact.html">Talk to us</a>
+      </div>
+    </footer>
+
+    <script src="./scripts/data.js"></script>
+    <script src="./scripts/home.js"></script>
+  </body>
+</html>

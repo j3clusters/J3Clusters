@@ -1,0 +1,150 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ListingType {
+  Apartment
+  Villa
+  Plot
+  PG
+}
+
+enum ListingStatus {
+  PENDING
+  PUBLISHED
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FurnishingType {
+  Unfurnished
+  SemiFurnished
+  Furnished
+}
+
+enum ListingPurpose {
+  Sale
+  Rent
+}
+
+model Listing {
+  id               String          @id @default(cuid())
+  title            String
+  purpose          ListingPurpose  @default(Sale)
+  type             ListingType
+  city             String
+  address          String          @default("") @db.Text
+  beds             Int
+  baths            Int
+  balconies        Int             @default(0)
+  parkingSpots     Int             @default(0)
+  furnishing       FurnishingType  @default(Unfurnished)
+  propertyAgeYears Int             @default(0)
+  availableFrom    String          @default("")
+  legalClearance   Boolean         @default(false)
+  ownerName        String          @default("")
+  ownerEmail       String          @default("")
+  ownerPhone       String          @default("")
+  areaSqft         Int
+  price            Int
+  image            String
+  imageUrls        String[]        @default([])
+  description      String          @db.Text
+  status           ListingStatus   @default(PENDING)
+  isFeatured       Boolean         @default(false)
+  approvedAt       DateTime?
+  approvedByEmail  String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model PropertySubmission {
+  id          String             @id @default(cuid())
+  ownerName   String
+  ownerEmail  String
+  ownerPhone  String
+  purpose     ListingPurpose     @default(Sale)
+  type        ListingType
+  address     String             @db.Text
+  city        String
+  areaSqft    Int
+  bedrooms    Int
+  bathrooms   Int
+  balconies   Int
+  parkingSpots Int
+  furnishing  FurnishingType
+  propertyAgeYears Int
+  availableFrom String
+  legalClearance Boolean
+  imageUrl    String
+  imageUrls   String[]         @default([])
+  price       Int
+  description String             @db.Text
+  status      SubmissionStatus   @default(PENDING)
+  reviewedAt  DateTime?
+  reviewedByEmail String?
+  createdAt   DateTime           @default(now())
+}
+
+model ContactLead {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String
+  message   String?  @db.Text
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model AppUser {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String
+  city         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actorEmail String
+  action     String
+  targetType String
+  targetId   String
+  message    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}

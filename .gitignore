@@ -1,0 +1,29 @@
+# Dependencies
+/node_modules
+
+# Next.js
+/.next
+/out
+
+# Vercel CLI link metadata (machine-local)
+.vercel
+
+# Env (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Prisma (optional generated state)
+/generated/prisma
+
+# Logs / OS
+npm-debug.log*
+.DS_Store
+tsconfig.tsbuildinfo
+
+# Local smoke-test artifacts
+scripts/smoke-*-cookie.txt
+
+# User-uploaded admin images (kept locally, not in git)
+/public/uploads/*
+!/public/uploads/.gitkeep
