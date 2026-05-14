@@ -142,7 +142,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="search-tabs">
-              <Link href="/listings/buy" className="search-tab-active">
+            <Link href="/listings/buy" className="search-tab-active">
               Buy
             </Link>
             <Link href="/listings/rent">Rent</Link>

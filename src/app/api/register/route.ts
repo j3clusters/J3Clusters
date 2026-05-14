@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import {
@@ -27,27 +28,46 @@ export async function POST(request: Request) {
   const { name, email, phone, city, password } = parsed.data;
   const normalizedEmail = email.trim().toLowerCase();
 
-  const existing = await prisma.appUser.findUnique({
-    where: { email: normalizedEmail },
-    select: { id: true },
-  });
-  if (existing) {
+  let user: { id: string; email: string };
+  try {
+    const existing = await prisma.appUser.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "This email is already registered." },
+        { status: 409 },
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    user = await prisma.appUser.create({
+      data: {
+        name,
+        email: normalizedEmail,
+        phone,
+        city,
+        passwordHash,
+      },
+      select: { id: true, email: true },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "This email is already registered." },
+        { status: 409 },
+      );
+    }
+    console.error("[register] Database error:", error);
     return NextResponse.json(
-      { error: "This email is already registered." },
-      { status: 409 },
+      { error: "Unable to complete registration. Please try again later." },
+      { status: 500 },
     );
   }
-
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user = await prisma.appUser.create({
-    data: {
-      name,
-      email: normalizedEmail,
-      phone,
-      city,
-      passwordHash,
-    },
-  });
 
   let token: string;
   try {

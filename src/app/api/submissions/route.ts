@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { mkdir, writeFile } from "fs/promises";
@@ -62,15 +63,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const fileName = `${Date.now()}-${crypto.randomUUID()}.webp`;
+    const fileName = `${Date.now()}-${randomUUID()}.webp`;
     const filePath = path.join(uploadDir, fileName);
     const buffer = Buffer.from(await image.arrayBuffer());
-    const optimizedBuffer = await sharp(buffer)
-      .rotate()
-      .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80, effort: 4 })
-      .toBuffer();
-    await writeFile(filePath, optimizedBuffer);
+    let optimizedBuffer: Buffer;
+    try {
+      optimizedBuffer = await sharp(buffer)
+        .rotate()
+        .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 80, effort: 4 })
+        .toBuffer();
+      await writeFile(filePath, optimizedBuffer);
+    } catch (error) {
+      console.error("[submissions] Image processing failed:", error);
+      return NextResponse.json(
+        {
+          error:
+            "One or more images could not be processed. Try different photos or formats.",
+        },
+        { status: 400 },
+      );
+    }
     imageUrls.push(`/uploads/${fileName}`);
   }
 

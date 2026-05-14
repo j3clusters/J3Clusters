@@ -19,14 +19,22 @@ export async function POST(request: Request) {
     );
   }
 
-  await prisma.contactLead.create({
-    data: {
-      name: parsed.data.name,
-      phone: parsed.data.phone,
-      email: parsed.data.email,
-      message: parsed.data.message,
-    },
-  });
+  try {
+    await prisma.contactLead.create({
+      data: {
+        name: parsed.data.name,
+        phone: parsed.data.phone,
+        email: parsed.data.email,
+        message: parsed.data.message,
+      },
+    });
+  } catch (error) {
+    console.error("[leads] Failed to save contact lead:", error);
+    return NextResponse.json(
+      { error: "Unable to save your message right now. Please try again later." },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

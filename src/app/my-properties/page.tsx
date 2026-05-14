@@ -125,7 +125,7 @@ export default async function MyPropertiesPage() {
         </div>
       </header>
 
-      <div className="container owner-portal-layout section">
+      <main className="container owner-portal-layout section">
         <OwnerPortalNav active="mine" />
         <div className="owner-portal-main">
           <section className="owner-my-section" aria-labelledby="my-submissions-heading">
@@ -256,7 +256,7 @@ export default async function MyPropertiesPage() {
             </section>
           ) : null}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

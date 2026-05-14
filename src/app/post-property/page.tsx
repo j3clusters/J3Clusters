@@ -39,7 +39,7 @@ export default async function PostPropertyPage() {
         </div>
       </header>
 
-      <div className="container owner-portal-layout section">
+      <main className="container owner-portal-layout section">
         <OwnerPortalNav active="post" />
         <div className="owner-portal-main">
           <div className="owner-portal-cards">
@@ -56,7 +56,7 @@ export default async function PostPropertyPage() {
           </div>
           <PostPropertyForm accountProfile={accountProfile} />
         </div>
-      </div>
+      </main>
     </div>
   );
 }
