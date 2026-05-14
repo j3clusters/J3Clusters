@@ -33,16 +33,23 @@ Mock HTTP JSON (still available)
 
 ## Local setup
 
-1. Create PostgreSQL DB `j3clusters` (exact name flexible; align with `DATABASE_URL`):
+1. Get PostgreSQL running (pick one):
+
+   **A — Docker (easiest if you use Docker Desktop):** from the repo root run `npm run db:up` (or `docker compose up -d`). Use the URL in `.env.example` under the “Local Docker” comment for `DATABASE_URL`.
+
+   **B — Install Postgres yourself:** create a database (name flexible; match `DATABASE_URL`):
 
 ```sql
 CREATE DATABASE j3clusters;
 ```
 
+   **C — Cloud (Neon, Supabase, etc.):** create a project, copy the **PostgreSQL** connection string, and use it as `DATABASE_URL` in `.env.local` (no domain needed yet).
+
 2. Copy `.env.example` → `.env.local` and edit values:
 
 - **`DATABASE_URL`**: include URL-encoded passwords (for example `#`/`@`/spaces must be escaped per URL rules).
-- **`ADMIN_JWT_SECRET`**: at least **32 characters** random string.
+- **`ADMIN_JWT_SECRET`** and **`USER_JWT_SECRET`**: each at least **32 characters** (random strings).
+- **`NEXT_PUBLIC_APP_URL`**: until you have a domain, use **`http://localhost:3003`** so local reset links match your dev server.
 
 3. Seed + run:
 

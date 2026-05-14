@@ -13,7 +13,9 @@
     "deploy": "vercel --prod",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

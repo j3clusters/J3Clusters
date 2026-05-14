@@ -1,0 +1,23 @@
+# Local PostgreSQL for development (optional). Domain not required.
+# Start:  docker compose up -d
+# Stop:   docker compose down
+# URL:    postgresql://j3clusters:j3clusters_dev@localhost:5432/j3clusters?schema=public
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: j3clusters
+      POSTGRES_PASSWORD: j3clusters_dev
+      POSTGRES_DB: j3clusters
+    volumes:
+      - j3_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U j3clusters -d j3clusters"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  j3_pgdata:
