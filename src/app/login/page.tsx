@@ -27,7 +27,7 @@ export default function LoginPage() {
       });
 
       if (userResponse.ok) {
-        router.push("/post-property");
+        router.push("/my-properties");
         router.refresh();
         return;
       }
@@ -63,7 +63,8 @@ export default function LoginPage() {
           <span className="portal-auth-badge">Owner access</span>
           <h1>Welcome back</h1>
           <p className="portal-auth-sub">
-            Sign in to post or manage your property submissions.
+            Sign in to post properties and view your submissions under My
+            properties.
           </p>
         </div>
         <form className="stacked-form" onSubmit={onSubmit}>

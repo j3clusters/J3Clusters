@@ -22,7 +22,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await prisma.adminUser.findUnique({ where: { email } });
+    const user = await prisma.adminUser.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
 
     if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
       return NextResponse.json(

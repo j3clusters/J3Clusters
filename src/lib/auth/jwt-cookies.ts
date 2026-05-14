@@ -1,0 +1,5 @@
+const COOKIE_NAME = "j3_admin";
+const USER_COOKIE_NAME = "j3_user";
+
+export { COOKIE_NAME as ADMIN_SESSION_COOKIE_NAME };
+export { USER_COOKIE_NAME as USER_SESSION_COOKIE_NAME };

@@ -2,7 +2,18 @@
 
 import { FormEvent, useState } from "react";
 
-export function PostPropertyForm() {
+export type PostPropertyAccountProfile = {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+};
+
+type PostPropertyFormProps = {
+  accountProfile?: PostPropertyAccountProfile | null;
+};
+
+export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProps) {
   const [propertyPurpose, setPropertyPurpose] = useState<"Sale" | "Rent" | "">(
     "",
   );
@@ -64,7 +75,7 @@ export function PostPropertyForm() {
       setPropertyType("");
       setFeedback({
         text:
-          "Received. Your property is queued for verification. It must be approved before it appears publicly.",
+          "Received. Your property is queued for verification. It must be approved before it appears publicly. Track status anytime under My properties in the owner menu.",
         ok: true,
       });
     } catch {
@@ -87,17 +98,42 @@ export function PostPropertyForm() {
         <div className="owner-form-section">
           <h3>Your contact details</h3>
           <div className="owner-form-grid">
+            {accountProfile ? (
+              <p className="owner-form-hint owner-form-grid-full">
+                Prefilled from your registration — keep these if you are the
+                property owner, or edit them if the listing should use a different
+                contact person.
+              </p>
+            ) : null}
             <label>
               Owner name
-              <input name="ownerName" type="text" required />
+              <input
+                name="ownerName"
+                type="text"
+                required
+                defaultValue={accountProfile?.name ?? ""}
+                autoComplete="name"
+              />
             </label>
             <label>
               Email
-              <input name="ownerEmail" type="email" required />
+              <input
+                name="ownerEmail"
+                type="email"
+                required
+                defaultValue={accountProfile?.email ?? ""}
+                autoComplete="email"
+              />
             </label>
             <label>
               Phone
-              <input name="ownerPhone" type="tel" required />
+              <input
+                name="ownerPhone"
+                type="tel"
+                required
+                defaultValue={accountProfile?.phone ?? ""}
+                autoComplete="tel"
+              />
             </label>
           </div>
         </div>
@@ -141,7 +177,13 @@ export function PostPropertyForm() {
             </label>
             <label>
               City
-              <input name="city" type="text" required />
+              <input
+                name="city"
+                type="text"
+                required
+                defaultValue={accountProfile?.city ?? ""}
+                autoComplete="address-level2"
+              />
             </label>
             <label className="owner-form-grid-full">
               Full address

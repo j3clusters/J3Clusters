@@ -1,6 +1,15 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 
-export function Header() {
+import { USER_SESSION_COOKIE_NAME } from "@/lib/auth/jwt-cookies";
+import { verifyUserJwt } from "@/lib/auth/verify-session-token";
+import { UserLogoutButton } from "@/components/UserLogoutButton";
+
+export async function Header() {
+  const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
+  const session = await verifyUserJwt(token);
+  const isOwner = Boolean(session);
+
   return (
     <header className="site-header">
       <div className="top-strip">
@@ -26,27 +35,45 @@ export function Header() {
             </span>
           </Link>
         </div>
-        <nav>
+        <nav aria-label="Primary">
           <ul className="nav-list">
             <li>
-              <Link href="/listings">Buy</Link>
+              <Link href="/listings/buy">Buy</Link>
             </li>
             <li>
-              <Link href="/listings">Rent</Link>
+              <Link href="/listings/rent">Rent</Link>
             </li>
             <li>
-              <Link href="/register">Sell</Link>
+              <Link href={isOwner ? "/post-property" : "/register"}>Sell</Link>
             </li>
-            <li>
-              <Link href="/register" className="primary-nav-cta">
-                Post Property Free
-              </Link>
-            </li>
-            <li>
-              <Link href="/login" className="muted-link">
-                Login
-              </Link>
-            </li>
+            {isOwner ? (
+              <>
+                <li>
+                  <Link href="/my-properties">My properties</Link>
+                </li>
+                <li>
+                  <Link href="/post-property" className="primary-nav-cta">
+                    Post property
+                  </Link>
+                </li>
+                <li>
+                  <UserLogoutButton className="header-logout-btn" />
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link href="/register" className="primary-nav-cta">
+                    Post Property Free
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="muted-link">
+                    Login
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </div>

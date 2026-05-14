@@ -1,11 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -38,8 +36,8 @@ export default function AdminLoginPage() {
         return;
       }
 
-      router.push("/admin");
-      router.refresh();
+      // Full navigation so the Set-Cookie from this response is always sent on the next request.
+      window.location.assign("/admin");
     } catch {
       setError("Network error. Try again.");
       setPending(false);

@@ -38,6 +38,8 @@ enum ListingPurpose {
 
 model Listing {
   id               String          @id @default(cuid())
+  /// When published from an owner submission, links back for owner dashboard.
+  sourceSubmissionId String?       @unique
   title            String
   purpose          ListingPurpose  @default(Sale)
   type             ListingType
@@ -93,6 +95,12 @@ model PropertySubmission {
   reviewedAt  DateTime?
   reviewedByEmail String?
   createdAt   DateTime           @default(now())
+  deletedAt   DateTime?
+  appUserId   String?
+  appUser     AppUser? @relation(fields: [appUserId], references: [id], onDelete: SetNull)
+
+  @@index([deletedAt])
+  @@index([appUserId])
 }
 
 model ContactLead {
@@ -102,6 +110,9 @@ model ContactLead {
   email     String
   message   String?  @db.Text
   createdAt DateTime @default(now())
+  deletedAt DateTime?
+
+  @@index([deletedAt])
 }
 
 model AdminUser {
@@ -122,6 +133,7 @@ model AppUser {
   updatedAt    DateTime @updatedAt
 
   passwordResetTokens PasswordResetToken[]
+  propertySubmissions PropertySubmission[]
 }
 
 model PasswordResetToken {

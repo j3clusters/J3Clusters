@@ -236,6 +236,22 @@ a {
   color: #111111;
 }
 
+.nav-list .header-logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: #111111;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.nav-list .header-logout-btn:hover {
+  color: #000000;
+}
+
 .hero {
   background:
     radial-gradient(circle at top right, #32cd32, transparent 48%),
@@ -542,6 +558,8 @@ h2 {
 }
 
 .search-tabs {
+  position: relative;
+  z-index: 2;
   display: flex;
   gap: 0.35rem;
   margin-top: 1rem;
@@ -914,6 +932,99 @@ button:focus-visible,
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+}
+
+/* Listings page — visual context for Buy vs Rent vs Any */
+.listings-hero {
+  padding: 1.1rem 1.15rem 1.15rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+}
+
+.listings-purpose-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  margin-bottom: 0.65rem;
+  border: 1px solid transparent;
+}
+
+.listings-page--buy .listings-hero {
+  border-left: 4px solid #16a34a;
+  background: linear-gradient(
+    125deg,
+    rgba(22, 163, 74, 0.12) 0%,
+    rgba(240, 253, 244, 0.65) 42%,
+    var(--surface) 100%
+  );
+}
+
+.listings-page--buy .listings-purpose-pill {
+  background: rgba(22, 163, 74, 0.18);
+  color: #14532d;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.listings-page--rent .listings-hero {
+  border-left: 4px solid #0284c7;
+  background: linear-gradient(
+    125deg,
+    rgba(2, 132, 199, 0.12) 0%,
+    rgba(240, 249, 255, 0.75) 45%,
+    var(--surface) 100%
+  );
+}
+
+.listings-page--rent .listings-purpose-pill {
+  background: rgba(2, 132, 199, 0.16);
+  color: #0c4a6e;
+  border-color: rgba(2, 132, 199, 0.35);
+}
+
+.listings-page--any .listings-hero {
+  border-left: 4px solid #64748b;
+  background: linear-gradient(
+    125deg,
+    rgba(100, 116, 139, 0.1) 0%,
+    rgba(248, 250, 252, 0.9) 50%,
+    var(--surface) 100%
+  );
+}
+
+.listings-page--any .listings-purpose-pill {
+  background: rgba(100, 116, 139, 0.14);
+  color: #334155;
+  border-color: rgba(100, 116, 139, 0.3);
+}
+
+.listings-section-head {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 0.35rem;
+}
+
+.listings-hero-intro {
+  margin-top: 0.15rem;
+  margin-bottom: 0;
+  max-width: 52rem;
+}
+
+.listings-page--buy .listing-sidebar {
+  border-top: 3px solid rgba(22, 163, 74, 0.45);
+}
+
+.listings-page--rent .listing-sidebar {
+  border-top: 3px solid rgba(2, 132, 199, 0.45);
+}
+
+.listings-page--any .listing-sidebar {
+  border-top: 3px solid rgba(100, 116, 139, 0.35);
 }
 
 .compare-bar {
@@ -2072,6 +2183,14 @@ button:focus-visible,
   font-size: 0.95rem;
 }
 
+.owner-portal-hero-note {
+  margin-top: 0.65rem;
+  max-width: 38rem;
+  opacity: 0.88;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
 .owner-portal-highlight {
   margin-top: 0.75rem;
   display: inline-flex;
@@ -2243,6 +2362,152 @@ button:focus-visible,
   font-size: 0.8rem;
   color: var(--muted);
   margin: -0.35rem 0 0;
+}
+
+.owner-my-section {
+  margin-bottom: 2rem;
+}
+
+.owner-my-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.owner-my-section-intro {
+  margin: 0 0 1rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 40rem;
+}
+
+.owner-my-empty {
+  max-width: 32rem;
+}
+
+.owner-my-empty-cta {
+  margin: 0.75rem 0 0;
+}
+
+.owner-my-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.owner-my-card {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 0.75rem;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+}
+
+.owner-my-card-image {
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #f1f5f9;
+  align-self: flex-start;
+}
+
+.owner-my-thumb {
+  display: block;
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+}
+
+.owner-my-card-body {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.owner-my-card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.owner-my-card-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.owner-my-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.owner-my-status[data-tone="pending"] {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.owner-my-status[data-tone="ok"] {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.owner-my-status[data-tone="err"] {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.owner-my-meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.owner-my-card-actions {
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.owner-my-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+@media (max-width: 560px) {
+  .owner-my-card {
+    flex-direction: column;
+  }
+
+  .owner-my-card-image {
+    width: 100%;
+  }
+
+  .owner-my-thumb {
+    width: 100%;
+    height: 160px;
+  }
 }
 
 .owner-form-submit {
@@ -2897,6 +3162,26 @@ button:focus-visible,
 
 .submission-review-modal {
   width: min(820px, 100%);
+}
+
+.submission-review-banner {
+  margin: 0.65rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.submission-review-banner-pending {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+}
+
+.submission-review-banner-done {
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  color: #065f46;
 }
 
 .submission-review-content {

@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3003",
+    "dev:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true});\" && next dev -p 3003",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "smoke": "node scripts/smoke-check.mjs",
     "postinstall": "prisma generate",
     "deploy": "vercel --prod",
     "db:push": "prisma db push",

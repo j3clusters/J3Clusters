@@ -7,7 +7,9 @@ Phase 3 adds PostgreSQL persistence (Prisma), user registration/login for postin
 Public
 
 - `/` — Home (`Listing` rows marked `PUBLISHED` from PostgreSQL + featured section)
-- `/listings` — Browse + filter listings (loads from PostgreSQL via `/api/listings`)
+- `/listings` — Browse all (optional filters; legacy `?mode=buy` / `?mode=rent` redirect to the URLs below)
+- `/listings/buy` — Sale listings only
+- `/listings/rent` — Rental listings only
 - `/property/[id]` — Listing details (PostgreSQL)
 
 Forms (stored in PostgreSQL)
@@ -51,6 +53,12 @@ npm run db:seed
 npm run dev
 ```
 
+4. Open **http://localhost:3003** in your browser (the dev server uses port **3003** on purpose so it does not clash with other apps on 3000/3001). If nothing loads, read the terminal: Next.js prints the exact URL, or an error if the port is busy.
+
+**Blank page or HTTP 500 in dev** (for example `Cannot find module './NNN.js'` in the terminal): stop the dev server, delete the `.next` folder, then run `npm run dev` again. Or run **`npm run dev:clean`** once (clears `.next` and starts dev on port 3003).
+
+**Quick API check** (with dev or `npm run build` + `PORT=3008 npm run start`): set `SMOKE_BASE_URL` to that server (for example `http://127.0.0.1:3003`) and run **`npm run smoke`**. Optional: set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in the environment to include the admin login API in the check.
+
 The seed script loads initial published listings from `src/data/listings.ts`, then **wipes and recreates listings/submissions/leads/admin users**. Create an admin user **only when** `ADMIN_EMAIL` + `ADMIN_PASSWORD` are set in `.env.local` **before running** `npm run db:seed`.
 
 **Do not re-run seed on production** unless you intend to truncate those tables.
@@ -78,13 +86,11 @@ DATABASE_URL="postgresql://…" npx prisma db push
 
 - `prisma/` — Prisma schema + seed
 - `src/app` — Next.js routes + API handlers
-- `src/lib` — Prisma client, auth helpers, validators
+- `src/lib` — Prisma client, auth helpers, validators, email (Resend)
 - `src/data` — Seed source data (mock listings)
+- `prototype-static/` — Legacy static HTML/CSS/JS mockup (not used by Next.js)
+- `scripts/` — TypeScript tooling (`db:seed` helpers, smoke check)
+- `var/listing-recycle-bin.json` — Local-only recycle metadata (gitignored; created at runtime)
 
-## Legacy static MVP
-
-The initial static files (`index.html`, `listings.html`, etc.) are still present for reference. The active implementation is the Next.js app under `src/`.
-
-## Environment note (Windows)
 
 If `npm` is not found in your terminal, reinstall Node.js with “Add to PATH” enabled (or use a terminal that loads your Node install).

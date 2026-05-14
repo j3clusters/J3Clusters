@@ -1,45 +1,51 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { ListingsView } from "./ListingsView";
+import {
+  ListingsShell,
+  type ListingsSearchParams,
+} from "./listings-shell";
 
 type PageProps = {
-  searchParams: Promise<{
-    mode?: string;
-    type?: string;
-    city?: string;
-    min?: string;
-    budget?: string;
-    sort?: string;
-  }>;
+  searchParams: Promise<ListingsSearchParams>;
 };
+
+function redirectPreservingFilters(
+  path: "/listings/buy" | "/listings/rent",
+  searchParams: ListingsSearchParams,
+) {
+  const p = new URLSearchParams();
+  if (searchParams.type) {
+    p.set("type", searchParams.type);
+  }
+  if (searchParams.city) {
+    p.set("city", searchParams.city);
+  }
+  if (searchParams.min) {
+    p.set("min", searchParams.min);
+  }
+  if (searchParams.budget) {
+    p.set("budget", searchParams.budget);
+  }
+  if (searchParams.sort) {
+    p.set("sort", searchParams.sort);
+  }
+  const q = p.toString();
+  redirect(q ? `${path}?${q}` : path);
+}
 
 export default async function ListingsPage(props: PageProps) {
   const searchParams = await props.searchParams;
   if ((searchParams.mode ?? "").toLowerCase() === "sell") {
     redirect("/register");
   }
-  const initialBudgetMax = searchParams.budget?.includes("-")
-    ? (searchParams.budget?.split("-")[1] ?? "")
-    : "";
 
-  return (
-    <Suspense
-      fallback={
-        <main className="container section">
-          <h1>Property listings</h1>
-          <p>Loading…</p>
-        </main>
-      }
-    >
-      <ListingsView
-        initialMode={searchParams.mode ?? ""}
-        initialType={searchParams.type ?? ""}
-        initialCity={searchParams.city ?? ""}
-        initialMinBudget={searchParams.min ?? ""}
-        initialBudgetMax={initialBudgetMax}
-        initialSort={searchParams.sort ?? "newest"}
-      />
-    </Suspense>
-  );
+  const mode = (searchParams.mode ?? "").toLowerCase();
+  if (mode === "buy" || mode === "sell") {
+    redirectPreservingFilters("/listings/buy", searchParams);
+  }
+  if (mode === "rent") {
+    redirectPreservingFilters("/listings/rent", searchParams);
+  }
+
+  return <ListingsShell purposeRoute="listings" searchParams={searchParams} />;
 }

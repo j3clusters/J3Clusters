@@ -11,6 +11,7 @@ import {
   getListingRecycleBinEntries,
   purgeExpiredRecycleBinEntries,
 } from "@/lib/listing-recycle-bin";
+import { RECYCLE_BIN_RETENTION_DAYS, recycleBinCutoffDate } from "@/lib/recycle-bin-retention";
 import {
   listingTypeLabel,
   submissionStatusLabel,
@@ -26,13 +27,19 @@ import { requireAdmin } from "@/lib/require-admin";
 import {
   approveSubmissionAction,
   bulkSubmissionAction,
-  editListingAction,
+  deleteContactLeadAction,
   deleteListingAction,
   deleteSubmissionAction,
+  editListingAction,
   editSubmissionAction,
+  markSubmissionReviewedAction,
+  permanentlyDeleteContactLeadAction,
   permanentlyDeleteListingAction,
+  permanentlyDeleteSubmissionAction,
   rejectSubmissionAction,
+  restoreContactLeadAction,
   restoreListingAction,
+  restoreSubmissionAction,
   toggleFeaturedListingAction,
 } from "./actions";
 
@@ -115,12 +122,23 @@ function buildAdminQuery(params: {
 
 export default async function AdminDashboardPage(props: PageProps) {
   const adminSession = await requireAdmin();
-  const expiredListingIds = await purgeExpiredRecycleBinEntries(30);
+  const expiredListingIds = await purgeExpiredRecycleBinEntries(
+    RECYCLE_BIN_RETENTION_DAYS,
+  );
   if (expiredListingIds.length) {
     await prisma.listing.deleteMany({
       where: { id: { in: expiredListingIds } },
     });
   }
+  const softDeleteCutoff = recycleBinCutoffDate();
+  await prisma.$transaction([
+    prisma.propertySubmission.deleteMany({
+      where: { deletedAt: { lt: softDeleteCutoff } },
+    }),
+    prisma.contactLead.deleteMany({
+      where: { deletedAt: { lt: softDeleteCutoff } },
+    }),
+  ]);
   const recycleBinEntries = await getListingRecycleBinEntries();
   const recycleBinDeletedAtMap = new Map(
     recycleBinEntries.map((item) => [item.listingId, item.deletedAtIso]),
@@ -141,6 +159,7 @@ export default async function AdminDashboardPage(props: PageProps) {
   const statusEnum = statusParamToEnum(activeStatus);
 
   const submissionWhere = {
+    deletedAt: null,
     ...(statusEnum ? { status: statusEnum } : {}),
     ...(searchText
       ? {
@@ -158,12 +177,15 @@ export default async function AdminDashboardPage(props: PageProps) {
     submissions,
     submissionTotal,
     pendingCount,
+    pendingAwaitingReviewCount,
     approvedCount,
     rejectedCount,
     publishedListings,
     recycledListings,
     leads,
     leadsTotal,
+    recycledSubmissions,
+    recycledLeads,
     auditLogs,
   ] = await Promise.all([
     prisma.propertySubmission.findMany({
@@ -174,13 +196,20 @@ export default async function AdminDashboardPage(props: PageProps) {
     }),
     prisma.propertySubmission.count({ where: submissionWhere }),
     prisma.propertySubmission.count({
-      where: { status: SubmissionStatus.PENDING },
+      where: { status: SubmissionStatus.PENDING, deletedAt: null },
     }),
     prisma.propertySubmission.count({
-      where: { status: SubmissionStatus.APPROVED },
+      where: {
+        status: SubmissionStatus.PENDING,
+        deletedAt: null,
+        reviewedAt: null,
+      },
     }),
     prisma.propertySubmission.count({
-      where: { status: SubmissionStatus.REJECTED },
+      where: { status: SubmissionStatus.APPROVED, deletedAt: null },
+    }),
+    prisma.propertySubmission.count({
+      where: { status: SubmissionStatus.REJECTED, deletedAt: null },
     }),
     prisma.listing.findMany({
       where: { status: ListingStatus.PUBLISHED },
@@ -195,11 +224,18 @@ export default async function AdminDashboardPage(props: PageProps) {
         })
       : Promise.resolve([]),
     prisma.contactLead.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
       skip: (currentCpage - 1) * leadsPageSize,
       take: leadsPageSize,
     }),
-    prisma.contactLead.count(),
+    prisma.contactLead.count({ where: { deletedAt: null } }),
+    prisma.propertySubmission.findMany({
+      where: { deletedAt: { not: null } },
+    }),
+    prisma.contactLead.findMany({
+      where: { deletedAt: { not: null } },
+    }),
     prisma.adminAuditLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -226,17 +262,49 @@ export default async function AdminDashboardPage(props: PageProps) {
     safeLpage * listingsPageSize,
   );
 
-  const sortedRecycledListings = [...recycledListings].sort((a, b) => {
-    const aTime = new Date(recycleBinDeletedAtMap.get(a.id) || 0).getTime();
-    const bTime = new Date(recycleBinDeletedAtMap.get(b.id) || 0).getTime();
-    return bTime - aTime;
-  });
+  type RecycleBinRow =
+    | {
+        kind: "listing";
+        deletedAt: Date;
+        listing: (typeof recycledListings)[number];
+      }
+    | {
+        kind: "submission";
+        deletedAt: Date;
+        submission: (typeof recycledSubmissions)[number];
+      }
+    | {
+        kind: "lead";
+        deletedAt: Date;
+        lead: (typeof recycledLeads)[number];
+      };
+
+  const sortedRecycleRows: RecycleBinRow[] = [
+    ...recycledListings.map((listing) => ({
+      kind: "listing" as const,
+      listing,
+      deletedAt: recycleBinDeletedAtMap.has(listing.id)
+        ? new Date(recycleBinDeletedAtMap.get(listing.id)!)
+        : listing.updatedAt,
+    })),
+    ...recycledSubmissions.map((submission) => ({
+      kind: "submission" as const,
+      submission,
+      deletedAt: submission.deletedAt!,
+    })),
+    ...recycledLeads.map((lead) => ({
+      kind: "lead" as const,
+      lead,
+      deletedAt: lead.deletedAt!,
+    })),
+  ].sort((a, b) => b.deletedAt.getTime() - a.deletedAt.getTime());
+
   const recycleTotalPages = Math.max(
     1,
-    Math.ceil(sortedRecycledListings.length / recycleBinPageSize),
+    Math.ceil(sortedRecycleRows.length / recycleBinPageSize),
   );
   const safeRpage = Math.min(currentRpage, recycleTotalPages);
-  const pagedRecycledListings = sortedRecycledListings.slice(
+  const pagedRecycleRows = sortedRecycleRows.slice(
     (safeRpage - 1) * recycleBinPageSize,
     safeRpage * recycleBinPageSize,
   );
@@ -270,8 +338,10 @@ export default async function AdminDashboardPage(props: PageProps) {
       <section className="admin-panel">
         <h2 className="admin-panel-title">Property submissions</h2>
         <p className="admin-panel-desc">
-          Posts from owners are stored as <strong>PENDING</strong>. Approve to
-          publish a live listing.
+          New posts are <strong>PENDING</strong>. Open <strong>Review</strong>, then{" "}
+          <strong>Mark as reviewed</strong> before <strong>Approve &amp; publish</strong>{" "}
+          moves the property to live listings. Deleting sends a submission to the
+          recycle bin for {RECYCLE_BIN_RETENTION_DAYS} days.
         </p>
         <form method="get" className="admin-filter-row" action="/admin">
           <input
@@ -326,6 +396,10 @@ export default async function AdminDashboardPage(props: PageProps) {
             <strong>{pendingCount}</strong>
           </div>
           <div className="admin-metric-card">
+            <span>Awaiting review</span>
+            <strong>{pendingAwaitingReviewCount}</strong>
+          </div>
+          <div className="admin-metric-card">
             <span>Approved</span>
             <strong>{approvedCount}</strong>
           </div>
@@ -368,7 +442,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                         variant="primary"
                         title="Approve & publish"
                         confirmLabel="Approve & publish"
-                        confirmMessage="The selected submissions will go live as published listings. Continue?"
+                        confirmMessage="Only submissions already marked as reviewed will be published. Continue?"
                       >
                         Bulk approve
                       </ConfirmSubmitButton>
@@ -383,7 +457,8 @@ export default async function AdminDashboardPage(props: PageProps) {
                         Bulk reject
                       </ConfirmSubmitButton>
                       <span className="admin-bulk-hint">
-                        Select at least one row to enable bulk actions.
+                        Bulk approve: select reviewed pending rows only (checkbox
+                        appears after review).
                       </span>
                     </div>
                   </form>
@@ -392,13 +467,14 @@ export default async function AdminDashboardPage(props: PageProps) {
               {submissions.map((submission) => (
                 <tr key={submission.id}>
                   <td className="admin-td">
-                    {submission.status === "PENDING" ? (
+                    {submission.status === "PENDING" &&
+                    submission.reviewedAt ? (
                       <input
                         type="checkbox"
                         name="submissionIds"
                         value={submission.id}
                         form="bulk-submissions-form"
-                        aria-label={`Select ${submission.ownerName}`}
+                        aria-label={`Select ${submission.ownerName} for bulk action`}
                       />
                     ) : (
                       <span className="admin-text-muted">—</span>
@@ -439,13 +515,26 @@ export default async function AdminDashboardPage(props: PageProps) {
                     {submission.price.toLocaleString("en-IN")}
                   </td>
                   <td className="admin-td">
-                    <span
-                      className={`admin-status-badge admin-status-${submissionStatusTone(
-                        submission.status,
-                      )}`}
-                    >
-                      {submissionStatusLabel(submission.status)}
-                    </span>
+                    <div className="admin-status-stack">
+                      <span
+                        className={`admin-status-badge admin-status-${submissionStatusTone(
+                          submission.status,
+                        )}`}
+                      >
+                        {submissionStatusLabel(submission.status)}
+                      </span>
+                      {submission.status === "PENDING" ? (
+                        submission.reviewedAt ? (
+                          <span className="admin-text-muted admin-status-sub">
+                            Reviewed · {formatUtc(submission.reviewedAt)}
+                          </span>
+                        ) : (
+                          <span className="admin-text-muted admin-status-sub">
+                            Awaiting review
+                          </span>
+                        )
+                      ) : null}
+                    </div>
                   </td>
                   <td className="admin-td">
                     {submission.status === "PENDING" ? (
@@ -487,19 +576,46 @@ export default async function AdminDashboardPage(props: PageProps) {
                             null,
                             submission.id,
                           )}
+                          markReviewedAction={markSubmissionReviewedAction.bind(
+                            null,
+                            submission.id,
+                          )}
+                          reviewedAtIso={
+                            submission.reviewedAt
+                              ? submission.reviewedAt.toISOString()
+                              : null
+                          }
                         />
-                        <form
-                          action={approveSubmissionAction.bind(null, submission.id)}
-                        >
-                          <ConfirmSubmitButton
-                            variant="primary"
-                            title="Approve & publish"
-                            confirmLabel="Approve & publish"
-                            confirmMessage={`Publish "${submission.type} in ${submission.city}" as a live listing?`}
+                        {!submission.reviewedAt ? (
+                          <form
+                            action={markSubmissionReviewedAction.bind(
+                              null,
+                              submission.id,
+                            )}
                           >
-                            Approve & publish
-                          </ConfirmSubmitButton>
-                        </form>
+                            <ConfirmSubmitButton
+                              variant="primary"
+                              title="Mark submission as reviewed"
+                              confirmLabel="Mark as reviewed"
+                              confirmMessage="Record that you have reviewed this submission? You can then approve to publish it."
+                            >
+                              Mark as reviewed
+                            </ConfirmSubmitButton>
+                          </form>
+                        ) : (
+                          <form
+                            action={approveSubmissionAction.bind(null, submission.id)}
+                          >
+                            <ConfirmSubmitButton
+                              variant="primary"
+                              title="Approve & publish"
+                              confirmLabel="Approve & publish"
+                              confirmMessage={`Publish "${submission.type} in ${submission.city}" as a live listing?`}
+                            >
+                              Approve & publish
+                            </ConfirmSubmitButton>
+                          </form>
+                        )}
                         <form
                           action={rejectSubmissionAction.bind(null, submission.id)}
                         >
@@ -557,9 +673,9 @@ export default async function AdminDashboardPage(props: PageProps) {
                         >
                           <ConfirmSubmitButton
                             className="secondary-btn danger-btn"
-                            title="Delete submission"
-                            confirmLabel="Delete submission"
-                            confirmMessage="This submission will be permanently removed. This cannot be undone."
+                            title="Move submission to recycle bin"
+                            confirmLabel="Move to recycle bin"
+                            confirmMessage={`This submission will be hidden from the queue and kept in the recycle bin for ${RECYCLE_BIN_RETENTION_DAYS} days. You can restore it from there.`}
                           >
                             Delete
                           </ConfirmSubmitButton>
@@ -571,9 +687,9 @@ export default async function AdminDashboardPage(props: PageProps) {
                       >
                         <ConfirmSubmitButton
                           className="secondary-btn danger-btn"
-                          title="Delete submission"
-                          confirmLabel="Delete submission"
-                          confirmMessage="This submission will be permanently removed. This cannot be undone."
+                          title="Move submission to recycle bin"
+                          confirmLabel="Move to recycle bin"
+                          confirmMessage={`This submission will be hidden from the queue and kept in the recycle bin for ${RECYCLE_BIN_RETENTION_DAYS} days. You can restore it from there.`}
                         >
                           Delete
                         </ConfirmSubmitButton>
@@ -629,8 +745,8 @@ export default async function AdminDashboardPage(props: PageProps) {
       <section className="admin-panel">
         <h2 className="admin-panel-title">Published listings</h2>
         <p className="admin-panel-desc">
-          Deleting moves a listing to recycle bin for 30 days. Use the tabs to
-          filter by purpose (For sale or For rent).
+          Deleting moves a listing to the recycle bin for {RECYCLE_BIN_RETENTION_DAYS}{" "}
+          days. Use the tabs to filter by purpose (For sale or For rent).
         </p>
         <div className="admin-tabs">
           <Link
@@ -862,9 +978,12 @@ export default async function AdminDashboardPage(props: PageProps) {
       </section>
 
       <section className="admin-panel">
-        <h2 className="admin-panel-title">Recycle bin (30 days)</h2>
+        <h2 className="admin-panel-title">
+          Recycle bin ({RECYCLE_BIN_RETENTION_DAYS} days)
+        </h2>
         <p className="admin-panel-desc">
-          Deleted listings stay here for 30 days, then are auto-removed.
+          Deleted listings, submissions, and contact leads stay here for{" "}
+          {RECYCLE_BIN_RETENTION_DAYS} days, then are removed automatically.
           {recycleTotalPages > 1
             ? ` Page ${safeRpage} of ${recycleTotalPages}.`
             : ""}
@@ -874,57 +993,169 @@ export default async function AdminDashboardPage(props: PageProps) {
             <thead>
               <tr>
                 <th className="admin-th">Deleted on</th>
-                <th className="admin-th">Title</th>
-                <th className="admin-th">City</th>
+                <th className="admin-th">Type</th>
+                <th className="admin-th">Summary</th>
                 <th className="admin-th admin-th-num">Price (INR)</th>
                 <th className="admin-th">Action</th>
               </tr>
             </thead>
             <tbody>
-              {pagedRecycledListings.map((listing) => (
-                <tr key={listing.id}>
+              {pagedRecycleRows.map((row) => (
+                <tr
+                  key={
+                    row.kind === "listing"
+                      ? `listing-${row.listing.id}`
+                      : row.kind === "submission"
+                        ? `submission-${row.submission.id}`
+                        : `lead-${row.lead.id}`
+                  }
+                >
+                  <td className="admin-td">{formatUtc(row.deletedAt)}</td>
                   <td className="admin-td">
-                    {recycleBinDeletedAtMap.get(listing.id)
-                      ? formatUtc(new Date(recycleBinDeletedAtMap.get(listing.id)!))
-                      : "—"}
+                    {row.kind === "listing"
+                      ? "Listing"
+                      : row.kind === "submission"
+                        ? "Submission"
+                        : "Lead"}
                   </td>
-                  <td className="admin-td">{listing.title}</td>
-                  <td className="admin-td">{listing.city}</td>
+                  <td className="admin-td">
+                    {row.kind === "listing" ? (
+                      <>
+                        <div>{row.listing.title}</div>
+                        <span className="admin-text-muted">{row.listing.city}</span>
+                      </>
+                    ) : row.kind === "submission" ? (
+                      <>
+                        <div>{row.submission.ownerName}</div>
+                        <span className="admin-text-muted">
+                          {listingTypeLabel(row.submission.type)} ·{" "}
+                          {row.submission.city}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div>{row.lead.name}</div>
+                        <span className="admin-text-muted">{row.lead.email}</span>
+                      </>
+                    )}
+                  </td>
                   <td className="admin-td admin-td-num">
-                    {listing.price.toLocaleString("en-IN")}
+                    {row.kind === "listing"
+                      ? row.listing.price.toLocaleString("en-IN")
+                      : row.kind === "submission"
+                        ? row.submission.price.toLocaleString("en-IN")
+                        : "—"}
                   </td>
                   <td className="admin-td">
                     <div className="admin-action-stack">
-                      <form action={restoreListingAction.bind(null, listing.id)}>
-                        <ConfirmSubmitButton
-                          className="secondary-btn"
-                          title="Restore listing"
-                          confirmLabel="Restore listing"
-                          confirmMessage="This listing will be restored and shown again on the public site."
-                          variant="primary"
-                        >
-                          Restore
-                        </ConfirmSubmitButton>
-                      </form>
-                      <form
-                        action={permanentlyDeleteListingAction.bind(null, listing.id)}
-                      >
-                        <ConfirmSubmitButton
-                          className="secondary-btn danger-btn"
-                          title="Permanently delete listing"
-                          confirmLabel="Delete forever"
-                          confirmMessage="This listing will be permanently removed from the database. This cannot be undone."
-                          requireTypedValue={adminSession.email}
-                          typedValueLabel={`Type your admin name "${adminSession.email}" to confirm`}
-                        >
-                          Delete forever
-                        </ConfirmSubmitButton>
-                      </form>
+                      {row.kind === "listing" ? (
+                        <>
+                          <form
+                            action={restoreListingAction.bind(null, row.listing.id)}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn"
+                              title="Restore listing"
+                              confirmLabel="Restore listing"
+                              confirmMessage="This listing will be restored and shown again on the public site."
+                              variant="primary"
+                            >
+                              Restore
+                            </ConfirmSubmitButton>
+                          </form>
+                          <form
+                            action={permanentlyDeleteListingAction.bind(
+                              null,
+                              row.listing.id,
+                            )}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn danger-btn"
+                              title="Permanently delete listing"
+                              confirmLabel="Delete forever"
+                              confirmMessage="This listing will be permanently removed from the database. This cannot be undone."
+                              requireTypedValue={adminSession.email}
+                              typedValueLabel={`Type your admin email "${adminSession.email}" to confirm`}
+                            >
+                              Delete forever
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : row.kind === "submission" ? (
+                        <>
+                          <form
+                            action={restoreSubmissionAction.bind(
+                              null,
+                              row.submission.id,
+                            )}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn"
+                              title="Restore submission"
+                              confirmLabel="Restore submission"
+                              confirmMessage="This submission will return to the submissions queue with its previous status."
+                              variant="primary"
+                            >
+                              Restore
+                            </ConfirmSubmitButton>
+                          </form>
+                          <form
+                            action={permanentlyDeleteSubmissionAction.bind(
+                              null,
+                              row.submission.id,
+                            )}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn danger-btn"
+                              title="Permanently delete submission"
+                              confirmLabel="Delete forever"
+                              confirmMessage="This submission will be permanently removed. This cannot be undone."
+                              requireTypedValue={adminSession.email}
+                              typedValueLabel={`Type your admin email "${adminSession.email}" to confirm`}
+                            >
+                              Delete forever
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      ) : (
+                        <>
+                          <form
+                            action={restoreContactLeadAction.bind(null, row.lead.id)}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn"
+                              title="Restore lead"
+                              confirmLabel="Restore lead"
+                              confirmMessage="This contact lead will appear again in the Contact leads table."
+                              variant="primary"
+                            >
+                              Restore
+                            </ConfirmSubmitButton>
+                          </form>
+                          <form
+                            action={permanentlyDeleteContactLeadAction.bind(
+                              null,
+                              row.lead.id,
+                            )}
+                          >
+                            <ConfirmSubmitButton
+                              className="secondary-btn danger-btn"
+                              title="Permanently delete lead"
+                              confirmLabel="Delete forever"
+                              confirmMessage="This lead will be permanently removed. This cannot be undone."
+                              requireTypedValue={adminSession.email}
+                              typedValueLabel={`Type your admin email "${adminSession.email}" to confirm`}
+                            >
+                              Delete forever
+                            </ConfirmSubmitButton>
+                          </form>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
               ))}
-              {pagedRecycledListings.length === 0 ? (
+              {pagedRecycleRows.length === 0 ? (
                 <tr>
                   <td className="admin-td" colSpan={5}>
                     Recycle bin is empty.
@@ -978,7 +1209,8 @@ export default async function AdminDashboardPage(props: PageProps) {
       <section className="admin-panel">
         <h2 className="admin-panel-title">Contact leads</h2>
         <p className="admin-panel-desc">
-          Inquiries captured from the Contact page.
+          Inquiries captured from the Contact page. Deleting moves a lead to the
+          recycle bin for {RECYCLE_BIN_RETENTION_DAYS} days.
           {leadsTotalPages > 1
             ? ` Page ${safeCpage} of ${leadsTotalPages}.`
             : ""}
@@ -991,6 +1223,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                 <th className="admin-th">Name</th>
                 <th className="admin-th">Contact</th>
                 <th className="admin-th">Message</th>
+                <th className="admin-th">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -1017,11 +1250,23 @@ export default async function AdminDashboardPage(props: PageProps) {
                   <td className="admin-td admin-td-clip">
                     {lead.message ?? "—"}
                   </td>
+                  <td className="admin-td">
+                    <form action={deleteContactLeadAction.bind(null, lead.id)}>
+                      <ConfirmSubmitButton
+                        className="secondary-btn danger-btn"
+                        title="Move lead to recycle bin"
+                        confirmLabel="Move to recycle bin"
+                        confirmMessage={`This lead will be hidden here and kept in the recycle bin for ${RECYCLE_BIN_RETENTION_DAYS} days.`}
+                      >
+                        Delete
+                      </ConfirmSubmitButton>
+                    </form>
+                  </td>
                 </tr>
               ))}
               {leads.length === 0 ? (
                 <tr>
-                  <td className="admin-td" colSpan={4}>
+                  <td className="admin-td" colSpan={5}>
                     No leads captured yet.
                   </td>
                 </tr>
@@ -1073,8 +1318,8 @@ export default async function AdminDashboardPage(props: PageProps) {
       <section className="admin-panel">
         <h2 className="admin-panel-title">Admin audit log</h2>
         <p className="admin-panel-desc">
-          Last 50 admin actions across submissions, listings, and recycle bin
-          operations.
+          Last 50 admin actions across submissions, listings, leads, and recycle
+          bin operations.
         </p>
         <div className="admin-table-wrap">
           <table className="admin-table">

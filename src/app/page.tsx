@@ -142,10 +142,10 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="search-tabs">
-            <Link href="/listings?mode=buy" className="search-tab-active">
+              <Link href="/listings/buy" className="search-tab-active">
               Buy
             </Link>
-            <Link href="/listings?mode=rent">Rent</Link>
+            <Link href="/listings/rent">Rent</Link>
             <Link href="/register">Sell</Link>
           </div>
           <form className="search-card portal-search" action="/listings">

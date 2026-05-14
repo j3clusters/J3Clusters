@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import {
   isPasswordEmailConfigured,
   sendPasswordResetEmail,
-} from "@/lib/password-reset-email";
+} from "@/lib/email/password-reset-email";
 import { passwordResetRequestSchema } from "@/lib/validators";
 
 const GENERIC_MESSAGE =

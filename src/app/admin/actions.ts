@@ -16,6 +16,10 @@ import {
 import { listingPurposeFor, withListingPurpose } from "@/lib/listing-purpose";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
+import {
+  sendSubmissionApprovedEmail,
+  sendSubmissionRejectedEmail,
+} from "@/lib/email/submission-status-email";
 import { isUploadedFile, MAX_IMAGES, saveUploadedImages } from "@/lib/upload";
 
 type AuditTarget = {
@@ -37,30 +41,32 @@ function auditLogData(actorEmail: string, item: AuditTarget) {
 
 function listingDataFromSubmission(
   submission: {
-  purpose: ListingPurpose;
-  type: ListingType;
-  city: string;
-  address: string;
-  bedrooms: number;
-  bathrooms: number;
-  balconies: number;
-  parkingSpots: number;
-  furnishing: FurnishingType;
-  propertyAgeYears: number;
-  availableFrom: string;
-  legalClearance: boolean;
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone: string;
-  areaSqft: number;
-  price: number;
-  imageUrl: string;
-  imageUrls: string[];
-  description: string;
+    id: string;
+    purpose: ListingPurpose;
+    type: ListingType;
+    city: string;
+    address: string;
+    bedrooms: number;
+    bathrooms: number;
+    balconies: number;
+    parkingSpots: number;
+    furnishing: FurnishingType;
+    propertyAgeYears: number;
+    availableFrom: string;
+    legalClearance: boolean;
+    ownerName: string;
+    ownerEmail: string;
+    ownerPhone: string;
+    areaSqft: number;
+    price: number;
+    imageUrl: string;
+    imageUrls: string[];
+    description: string;
   },
   audit: { approvedAt: Date; approvedByEmail: string },
 ) {
   return {
+    sourceSubmissionId: submission.id,
     title: `${submission.type} in ${submission.city}`,
     purpose: submission.purpose,
     type: submission.type,
@@ -101,22 +107,30 @@ export async function approveSubmissionAction(
   void formData;
   const admin = await requireAdmin();
 
-  const submission = await prisma.propertySubmission.findUnique({
-    where: { id: submissionId },
+  const submission = await prisma.propertySubmission.findFirst({
+    where: { id: submissionId, deletedAt: null },
   });
 
-  if (!submission || submission.status !== SubmissionStatus.PENDING) {
+  if (
+    !submission ||
+    submission.status !== SubmissionStatus.PENDING ||
+    !submission.reviewedAt
+  ) {
     return;
   }
 
   const approvedAt = new Date();
+  let newListingId: string | null = null;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.propertySubmission.updateMany({
-      where: { id: submission.id, status: SubmissionStatus.PENDING },
+      where: {
+        id: submission.id,
+        status: SubmissionStatus.PENDING,
+        deletedAt: null,
+        reviewedAt: { not: null },
+      },
       data: {
         status: SubmissionStatus.APPROVED,
-        reviewedAt: approvedAt,
-        reviewedByEmail: admin.email,
       },
     });
 
@@ -124,12 +138,13 @@ export async function approveSubmissionAction(
       throw new Error("Submission was already processed.");
     }
 
-    await tx.listing.create({
+    const listing = await tx.listing.create({
       data: listingDataFromSubmission(submission, {
         approvedAt,
         approvedByEmail: admin.email,
       }),
     });
+    newListingId = listing.id;
     await tx.adminAuditLog.create({
       data: auditLogData(admin.email, {
         action: "APPROVE_SUBMISSION",
@@ -140,9 +155,59 @@ export async function approveSubmissionAction(
     });
   });
 
+  if (newListingId) {
+    const emailed = await sendSubmissionApprovedEmail({
+      to: submission.ownerEmail.trim(),
+      ownerName: submission.ownerName.trim(),
+      summary: `${submission.type} in ${submission.city}`,
+      listingPath: `/property/${newListingId}`,
+    });
+    if (!emailed.ok) {
+      console.error("[submission-email] approve", {
+        submissionId: submission.id,
+        reason: emailed.reason,
+      });
+    }
+  }
+
   revalidatePath("/admin");
   revalidatePath("/listings");
+  revalidatePath("/listings/buy");
+  revalidatePath("/listings/rent");
   revalidatePath("/");
+  revalidatePath("/my-properties");
+}
+
+export async function markSubmissionReviewedAction(
+  submissionId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const now = new Date();
+  const result = await prisma.propertySubmission.updateMany({
+    where: {
+      id: submissionId,
+      status: SubmissionStatus.PENDING,
+      deletedAt: null,
+      reviewedAt: null,
+    },
+    data: {
+      reviewedAt: now,
+      reviewedByEmail: admin.email,
+    },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "MARK_SUBMISSION_REVIEWED",
+      targetType: "PropertySubmission",
+      targetId: submissionId,
+    }),
+  });
+  revalidatePath("/admin");
 }
 
 export async function rejectSubmissionAction(
@@ -152,8 +217,19 @@ export async function rejectSubmissionAction(
   void formData;
   const admin = await requireAdmin();
 
+  const submission = await prisma.propertySubmission.findFirst({
+    where: {
+      id: submissionId,
+      status: SubmissionStatus.PENDING,
+      deletedAt: null,
+    },
+  });
+  if (!submission) {
+    return;
+  }
+
   const result = await prisma.propertySubmission.updateMany({
-    where: { id: submissionId, status: SubmissionStatus.PENDING },
+    where: { id: submissionId, status: SubmissionStatus.PENDING, deletedAt: null },
     data: {
       status: SubmissionStatus.REJECTED,
       reviewedAt: new Date(),
@@ -172,7 +248,21 @@ export async function rejectSubmissionAction(
       targetId: submissionId,
     }),
   });
+
+  const emailed = await sendSubmissionRejectedEmail({
+    to: submission.ownerEmail.trim(),
+    ownerName: submission.ownerName.trim(),
+    summary: `${submission.type} in ${submission.city}`,
+  });
+  if (!emailed.ok) {
+    console.error("[submission-email] reject", {
+      submissionId,
+      reason: emailed.reason,
+    });
+  }
+
   revalidatePath("/admin");
+  revalidatePath("/my-properties");
 }
 
 export async function bulkSubmissionAction(formData: FormData): Promise<void> {
@@ -192,6 +282,8 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
       where: {
         id: { in: submissionIds },
         status: SubmissionStatus.PENDING,
+        deletedAt: null,
+        reviewedAt: { not: null },
       },
     });
 
@@ -205,11 +297,11 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
         where: {
           id: { in: pendingSubmissions.map((item) => item.id) },
           status: SubmissionStatus.PENDING,
+          deletedAt: null,
+          reviewedAt: { not: null },
         },
         data: {
           status: SubmissionStatus.APPROVED,
-          reviewedAt: approvedAt,
-          reviewedByEmail: admin.email,
         },
       });
 
@@ -233,14 +325,55 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
       });
     });
 
+    const publishedRows = await prisma.listing.findMany({
+      where: {
+        sourceSubmissionId: { in: pendingSubmissions.map((item) => item.id) },
+      },
+      select: { id: true, sourceSubmissionId: true },
+    });
+    const listingIdBySubmission = new Map(
+      publishedRows
+        .filter((row) => row.sourceSubmissionId)
+        .map((row) => [row.sourceSubmissionId as string, row.id]),
+    );
+    for (const sub of pendingSubmissions) {
+      const listingId = listingIdBySubmission.get(sub.id);
+      if (!listingId) {
+        continue;
+      }
+      const emailed = await sendSubmissionApprovedEmail({
+        to: sub.ownerEmail.trim(),
+        ownerName: sub.ownerName.trim(),
+        summary: `${sub.type} in ${sub.city}`,
+        listingPath: `/property/${listingId}`,
+      });
+      if (!emailed.ok) {
+        console.error("[submission-email] bulk approve", {
+          submissionId: sub.id,
+          reason: emailed.reason,
+        });
+      }
+    }
+
     revalidatePath("/listings");
+    revalidatePath("/listings/buy");
+    revalidatePath("/listings/rent");
     revalidatePath("/");
+    revalidatePath("/my-properties");
   } else if (intent === "reject") {
+    const toReject = await prisma.propertySubmission.findMany({
+      where: {
+        id: { in: submissionIds },
+        status: SubmissionStatus.PENDING,
+        deletedAt: null,
+      },
+    });
     const rejectedAt = new Date();
     const result = await prisma.propertySubmission.updateMany({
       where: {
         id: { in: submissionIds },
         status: SubmissionStatus.PENDING,
+        deletedAt: null,
       },
       data: {
         status: SubmissionStatus.REJECTED,
@@ -257,7 +390,28 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
           message: `Rejected ${result.count} submission(s).`,
         }),
       });
+      const rejectedRows = await prisma.propertySubmission.findMany({
+        where: {
+          id: { in: toReject.map((item) => item.id) },
+          status: SubmissionStatus.REJECTED,
+          reviewedByEmail: admin.email,
+        },
+      });
+      for (const sub of rejectedRows) {
+        const emailed = await sendSubmissionRejectedEmail({
+          to: sub.ownerEmail.trim(),
+          ownerName: sub.ownerName.trim(),
+          summary: `${sub.type} in ${sub.city}`,
+        });
+        if (!emailed.ok) {
+          console.error("[submission-email] bulk reject", {
+            submissionId: sub.id,
+            reason: emailed.reason,
+          });
+        }
+      }
     }
+    revalidatePath("/my-properties");
   } else {
     return;
   }
@@ -287,8 +441,8 @@ export async function editSubmissionAction(formData: FormData): Promise<void> {
   const legalClearance = formData.get("legalClearance") === "on";
   const priceRaw = Number(formData.get("price") || 0);
 
-  const existing = await prisma.propertySubmission.findUnique({
-    where: { id },
+  const existing = await prisma.propertySubmission.findFirst({
+    where: { id, deletedAt: null },
   });
   if (!existing) {
     return;
@@ -380,6 +534,8 @@ export async function editSubmissionAction(formData: FormData): Promise<void> {
       imageUrl,
       imageUrls,
       price: Math.round(priceRaw),
+      reviewedAt: null,
+      reviewedByEmail: null,
     },
   });
 
@@ -392,6 +548,7 @@ export async function editSubmissionAction(formData: FormData): Promise<void> {
     }),
   });
   revalidatePath("/admin");
+  revalidatePath("/my-properties");
 }
 
 export async function deleteSubmissionAction(
@@ -400,14 +557,135 @@ export async function deleteSubmissionAction(
 ): Promise<void> {
   void formData;
   const admin = await requireAdmin();
-  await prisma.propertySubmission.delete({
-    where: { id: submissionId },
+  const now = new Date();
+  const result = await prisma.propertySubmission.updateMany({
+    where: { id: submissionId, deletedAt: null },
+    data: { deletedAt: now },
   });
+  if (result.count !== 1) {
+    return;
+  }
   await prisma.adminAuditLog.create({
     data: auditLogData(admin.email, {
-      action: "DELETE_SUBMISSION",
+      action: "MOVE_SUBMISSION_TO_RECYCLE_BIN",
       targetType: "PropertySubmission",
       targetId: submissionId,
+    }),
+  });
+  revalidatePath("/admin");
+  revalidatePath("/my-properties");
+}
+
+export async function restoreSubmissionAction(
+  submissionId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const result = await prisma.propertySubmission.updateMany({
+    where: { id: submissionId, deletedAt: { not: null } },
+    data: { deletedAt: null },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "RESTORE_SUBMISSION",
+      targetType: "PropertySubmission",
+      targetId: submissionId,
+    }),
+  });
+  revalidatePath("/admin");
+  revalidatePath("/my-properties");
+}
+
+export async function permanentlyDeleteSubmissionAction(
+  submissionId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const result = await prisma.propertySubmission.deleteMany({
+    where: { id: submissionId, deletedAt: { not: null } },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "PERMANENTLY_DELETE_SUBMISSION",
+      targetType: "PropertySubmission",
+      targetId: submissionId,
+    }),
+  });
+  revalidatePath("/admin");
+}
+
+export async function deleteContactLeadAction(
+  leadId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const now = new Date();
+  const result = await prisma.contactLead.updateMany({
+    where: { id: leadId, deletedAt: null },
+    data: { deletedAt: now },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "MOVE_LEAD_TO_RECYCLE_BIN",
+      targetType: "ContactLead",
+      targetId: leadId,
+    }),
+  });
+  revalidatePath("/admin");
+}
+
+export async function restoreContactLeadAction(
+  leadId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const result = await prisma.contactLead.updateMany({
+    where: { id: leadId, deletedAt: { not: null } },
+    data: { deletedAt: null },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "RESTORE_CONTACT_LEAD",
+      targetType: "ContactLead",
+      targetId: leadId,
+    }),
+  });
+  revalidatePath("/admin");
+}
+
+export async function permanentlyDeleteContactLeadAction(
+  leadId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const result = await prisma.contactLead.deleteMany({
+    where: { id: leadId, deletedAt: { not: null } },
+  });
+  if (result.count !== 1) {
+    return;
+  }
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "PERMANENTLY_DELETE_CONTACT_LEAD",
+      targetType: "ContactLead",
+      targetId: leadId,
     }),
   });
   revalidatePath("/admin");
@@ -433,7 +711,10 @@ export async function deleteListingAction(
   });
   revalidatePath("/admin");
   revalidatePath("/listings");
+  revalidatePath("/listings/buy");
+  revalidatePath("/listings/rent");
   revalidatePath("/");
+  revalidatePath("/my-properties");
 }
 
 export async function editListingAction(formData: FormData): Promise<void> {
@@ -568,7 +849,10 @@ export async function editListingAction(formData: FormData): Promise<void> {
   });
   revalidatePath("/admin");
   revalidatePath("/listings");
+  revalidatePath("/listings/buy");
+  revalidatePath("/listings/rent");
   revalidatePath("/");
+  revalidatePath("/my-properties");
 }
 
 export async function toggleFeaturedListingAction(
@@ -622,7 +906,10 @@ export async function restoreListingAction(
   });
   revalidatePath("/admin");
   revalidatePath("/listings");
+  revalidatePath("/listings/buy");
+  revalidatePath("/listings/rent");
   revalidatePath("/");
+  revalidatePath("/my-properties");
 }
 
 export async function permanentlyDeleteListingAction(
@@ -644,5 +931,8 @@ export async function permanentlyDeleteListingAction(
   });
   revalidatePath("/admin");
   revalidatePath("/listings");
+  revalidatePath("/listings/buy");
+  revalidatePath("/listings/rent");
   revalidatePath("/");
+  revalidatePath("/my-properties");
 }

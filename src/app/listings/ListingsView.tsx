@@ -7,6 +7,8 @@ import { PropertyCard } from "@/components/PropertyCard";
 import type { Listing } from "@/types/listing";
 
 type ListingsViewProps = {
+  /** `/listings` vs dedicated `/listings/buy` or `/listings/rent` */
+  purposeRoute?: "listings" | "buy" | "rent";
   initialMode: string;
   initialType: string;
   initialCity: string;
@@ -15,7 +17,19 @@ type ListingsViewProps = {
   initialSort: string;
 };
 
+function normalizePurposeMode(raw: string): "" | "buy" | "rent" {
+  const v = raw.trim().toLowerCase();
+  if (v === "rent") {
+    return "rent";
+  }
+  if (v === "buy" || v === "sell") {
+    return "buy";
+  }
+  return "";
+}
+
 export function ListingsView({
+  purposeRoute = "listings",
   initialMode,
   initialType,
   initialCity,
@@ -25,7 +39,7 @@ export function ListingsView({
 }: ListingsViewProps) {
   const router = useRouter();
   const [items, setItems] = useState<Listing[] | null>(null);
-  const [mode, setMode] = useState(initialMode);
+  const [mode, setMode] = useState(() => normalizePurposeMode(initialMode));
   const [type, setType] = useState(initialType);
   const [city, setCity] = useState(initialCity);
   const [minBudget, setMinBudget] = useState(initialMinBudget);
@@ -35,6 +49,22 @@ export function ListingsView({
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [showComparePanel, setShowComparePanel] = useState(false);
   const pageSize = 6;
+
+  useEffect(() => {
+    setMode(normalizePurposeMode(initialMode));
+    setType(initialType);
+    setCity(initialCity);
+    setMinBudget(initialMinBudget);
+    setMaxBudget(initialBudgetMax);
+    setSort(initialSort || "newest");
+  }, [
+    initialMode,
+    initialType,
+    initialCity,
+    initialMinBudget,
+    initialBudgetMax,
+    initialSort,
+  ]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -52,7 +82,7 @@ export function ListingsView({
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (mode) {
+    if (purposeRoute === "listings" && mode) {
       params.set("mode", mode);
     }
     if (type) {
@@ -71,9 +101,15 @@ export function ListingsView({
       params.set("sort", sort);
     }
 
+    const basePath =
+      purposeRoute === "buy"
+        ? "/listings/buy"
+        : purposeRoute === "rent"
+          ? "/listings/rent"
+          : "/listings";
     const query = params.toString();
-    router.replace(query ? `/listings?${query}` : "/listings");
-  }, [mode, type, city, minBudget, maxBudget, sort, router]);
+    router.replace(query ? `${basePath}?${query}` : basePath);
+  }, [purposeRoute, mode, type, city, minBudget, maxBudget, sort, router]);
 
   const filtered = useMemo(() => {
     if (!items) {
@@ -108,14 +144,66 @@ export function ListingsView({
   }, [items, type, city, minBudget, maxBudget, sort]);
 
   const clearFilters = () => {
-    setMode("");
     setType("");
     setCity("");
     setMinBudget("");
     setMaxBudget("");
     setSort("newest");
     setPage(1);
+    if (purposeRoute === "listings") {
+      setMode("");
+    }
   };
+
+  function filterQueryString(): string {
+    const params = new URLSearchParams();
+    if (type) {
+      params.set("type", type);
+    }
+    if (city.trim()) {
+      params.set("city", city.trim());
+    }
+    if (minBudget) {
+      params.set("min", minBudget);
+    }
+    if (maxBudget) {
+      params.set("budget", `0-${maxBudget}`);
+    }
+    if (sort && sort !== "newest") {
+      params.set("sort", sort);
+    }
+    return params.toString();
+  }
+
+  function handlePurposeChange(raw: string) {
+    const next = normalizePurposeMode(raw);
+    if (purposeRoute === "listings") {
+      setMode(next);
+      return;
+    }
+    const q = filterQueryString();
+    if (purposeRoute === "buy") {
+      if (next === "rent") {
+        router.push(q ? `/listings/rent?${q}` : "/listings/rent");
+        return;
+      }
+      if (next === "") {
+        router.push(q ? `/listings?${q}` : "/listings");
+        return;
+      }
+      return;
+    }
+    if (purposeRoute === "rent") {
+      if (next === "buy") {
+        router.push(q ? `/listings/buy?${q}` : "/listings/buy");
+        return;
+      }
+      if (next === "") {
+        router.push(q ? `/listings?${q}` : "/listings");
+        return;
+      }
+    }
+  }
 
   useEffect(() => {
     setPage(1);
@@ -154,20 +242,83 @@ export function ListingsView({
 
   const compareDisabled = compareIds.length >= 3;
 
+  const listingsHeading = useMemo(() => {
+    if (mode === "rent") {
+      return "Properties for rent";
+    }
+    if (mode === "buy") {
+      return "Properties for sale";
+    }
+    return "Property listings";
+  }, [mode]);
+
+  const listingsResultLine = useMemo(() => {
+    if (items === null) {
+      return "Loading listings...";
+    }
+    const pagePart = `page ${safePage} of ${totalPages}`;
+    if (mode === "rent") {
+      return `${filtered.length} rentals match your filters • ${pagePart}`;
+    }
+    if (mode === "buy") {
+      return `${filtered.length} sale listings match your filters • ${pagePart}`;
+    }
+    return `${filtered.length} properties found • ${pagePart}`;
+  }, [items, filtered.length, mode, safePage, totalPages]);
+
+  const listingsIntro = useMemo(() => {
+    if (mode === "rent") {
+      return "Browse verified rental homes and PG options with clear pricing, filters, and side-by-side comparison.";
+    }
+    if (mode === "buy") {
+      return "Explore verified homes and land for purchase with transparent filters and quick comparison.";
+    }
+    return "Discover verified homes similar to leading real-estate marketplaces, with transparent filters and quick comparison.";
+  }, [mode]);
+
+  const purposeVariant = useMemo((): "buy" | "rent" | "any" => {
+    if (mode === "rent") {
+      return "rent";
+    }
+    if (mode === "buy") {
+      return "buy";
+    }
+    return "any";
+  }, [mode]);
+
+  const purposePillLabel = useMemo(() => {
+    if (purposeVariant === "rent") {
+      return "Rentals";
+    }
+    if (purposeVariant === "buy") {
+      return "For sale";
+    }
+    return "All listings";
+  }, [purposeVariant]);
+
+  const filtersToolbarHint = useMemo(() => {
+    if (purposeVariant === "rent") {
+      return "Rental inventory updates as you change filters below.";
+    }
+    if (purposeVariant === "buy") {
+      return "Sale inventory updates as you change filters below.";
+    }
+    return "Filters apply instantly once listings load.";
+  }, [purposeVariant]);
+
   return (
-    <main className="container section">
-      <div className="section-head">
-        <h1>Property listings</h1>
-        <p>
-          {items === null
-            ? "Loading listings..."
-            : `${filtered.length} properties found • page ${safePage} of ${totalPages}`}
-        </p>
-      </div>
-      <p className="meta" style={{ marginTop: "-0.4rem", marginBottom: "1rem" }}>
-        Discover verified homes similar to leading real-estate marketplaces,
-        with transparent filters and quick comparison.
-      </p>
+    <main
+      className={`listings-page container section listings-page--${purposeVariant}`}
+      data-listing-purpose={purposeVariant}
+    >
+      <header className="listings-hero">
+        <span className="listings-purpose-pill">{purposePillLabel}</span>
+        <div className="section-head listings-section-head">
+          <h1>{listingsHeading}</h1>
+          <p>{listingsResultLine}</p>
+        </div>
+        <p className="meta listings-hero-intro">{listingsIntro}</p>
+      </header>
 
       <div className="listing-layout">
         <aside className="listing-sidebar">
@@ -175,7 +326,10 @@ export function ListingsView({
           <div className="filters-vertical">
             <label>
               Purpose
-              <select value={mode} onChange={(event) => setMode(event.target.value)}>
+              <select
+                value={mode}
+                onChange={(event) => handlePurposeChange(event.target.value)}
+              >
                 <option value="">Any</option>
                 <option value="buy">Buy</option>
                 <option value="rent">Rent</option>
@@ -227,7 +381,7 @@ export function ListingsView({
         </aside>
         <section>
           <div className="filters-toolbar">
-            <span>Filters apply instantly once listings load.</span>
+            <span>{filtersToolbarHint}</span>
             <label className="sort-inline">
               Sort
               <select value={sort} onChange={(event) => setSort(event.target.value)}>

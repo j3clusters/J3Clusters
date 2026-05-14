@@ -2,10 +2,23 @@ import Link from "next/link";
 import { OwnerPortalNav } from "@/components/OwnerPortalNav";
 import { PostPropertyForm } from "@/components/PostPropertyForm";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
+import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/require-user";
 
 export default async function PostPropertyPage() {
-  await requireUser();
+  const session = await requireUser();
+  const user = await prisma.appUser.findUnique({
+    where: { id: session.sub },
+    select: { name: true, email: true, phone: true, city: true },
+  });
+  const accountProfile = user
+    ? {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        city: user.city,
+      }
+    : null;
 
   return (
     <div className="owner-portal">
@@ -41,7 +54,7 @@ export default async function PostPropertyPage() {
               registered yet.
             </div>
           </div>
-          <PostPropertyForm />
+          <PostPropertyForm accountProfile={accountProfile} />
         </div>
       </div>
     </div>

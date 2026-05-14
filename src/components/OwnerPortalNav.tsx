@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 type OwnerPortalNavProps = {
-  active: "post" | "listings" | "home";
+  active: "post" | "mine" | "listings" | "home";
 };
 
 export function OwnerPortalNav({ active }: OwnerPortalNavProps) {
@@ -13,6 +13,12 @@ export function OwnerPortalNav({ active }: OwnerPortalNavProps) {
         className={active === "post" ? "is-active" : undefined}
       >
         Post property
+      </Link>
+      <Link
+        href="/my-properties"
+        className={active === "mine" ? "is-active" : undefined}
+      >
+        My properties
       </Link>
       <Link
         href="/listings"

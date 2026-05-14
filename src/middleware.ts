@@ -4,9 +4,8 @@ import { NextResponse } from "next/server";
 import {
   ADMIN_SESSION_COOKIE_NAME,
   USER_SESSION_COOKIE_NAME,
-  verifyAdminJwt,
-  verifyUserJwt,
-} from "@/lib/auth/session";
+} from "@/lib/auth/jwt-cookies";
+import { verifyAdminJwt, verifyUserJwt } from "@/lib/auth/verify-session-token";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -20,7 +19,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/post-property")) {
+  if (
+    pathname.startsWith("/post-property") ||
+    pathname.startsWith("/my-properties")
+  ) {
     const token = request.cookies.get(USER_SESSION_COOKIE_NAME)?.value;
     const session = await verifyUserJwt(token);
     if (!session) {
@@ -33,5 +35,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/post-property/:path*"],
+  matcher: [
+    "/admin",
+    "/admin/:path*",
+    "/post-property",
+    "/post-property/:path*",
+    "/my-properties",
+    "/my-properties/:path*",
+  ],
 };

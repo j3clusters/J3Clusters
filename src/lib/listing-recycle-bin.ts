@@ -1,6 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
+import { RECYCLE_BIN_RETENTION_DAYS } from "@/lib/recycle-bin-retention";
+
 type ListingRecycleBinEntry = {
   listingId: string;
   deletedAtIso: string;
@@ -8,7 +10,7 @@ type ListingRecycleBinEntry = {
 
 const recycleBinFilePath = path.join(
   process.cwd(),
-  "data",
+  "var",
   "listing-recycle-bin.json",
 );
 
@@ -55,7 +57,7 @@ export async function removeListingFromRecycleBin(listingId: string): Promise<vo
 }
 
 export async function purgeExpiredRecycleBinEntries(
-  retentionDays = 30,
+  retentionDays = RECYCLE_BIN_RETENTION_DAYS,
 ): Promise<string[]> {
   const entries = await readEntries();
   const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;

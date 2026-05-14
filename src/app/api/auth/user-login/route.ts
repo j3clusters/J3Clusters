@@ -22,7 +22,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await prisma.appUser.findUnique({ where: { email } });
+    const user = await prisma.appUser.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
     if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -30,7 +32,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await signUserJwt({ sub: user.id, email: user.email });
+    let token: string;
+    try {
+      token = await signUserJwt({ sub: user.id, email: user.email });
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "Server misconfigured: set USER_JWT_SECRET or ADMIN_JWT_SECRET (32+ chars) in your environment.",
+        },
+        { status: 503 },
+      );
+    }
     const response = NextResponse.json({ ok: true });
     response.cookies.set(USER_SESSION_COOKIE_NAME, token, {
       httpOnly: true,

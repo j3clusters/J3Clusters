@@ -33,8 +33,11 @@ async function main() {
 
   if (email && plain) {
     const passwordHash = bcrypt.hashSync(plain, 10);
-    await prisma.adminUser.create({ data: { email, passwordHash } });
-    console.info(`Created admin account for ${email}`);
+    const normalizedEmail = email.trim().toLowerCase();
+    await prisma.adminUser.create({
+      data: { email: normalizedEmail, passwordHash },
+    });
+    console.info(`Created admin account for ${normalizedEmail}`);
   } else {
     console.warn(
       "Skipped admin seed (set ADMIN_EMAIL and ADMIN_PASSWORD in .env)."

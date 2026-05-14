@@ -13,8 +13,8 @@
 .env.local
 .env.*.local
 
-# Prisma (optional generated state)
-/generated/prisma
+# Local runtime (recycle bin JSON — not seed data)
+/var/listing-recycle-bin.json
 
 # Logs / OS
 npm-debug.log*
@@ -23,6 +23,7 @@ tsconfig.tsbuildinfo
 
 # Local smoke-test artifacts
 scripts/smoke-*-cookie.txt
+.curl-login.html
 
 # User-uploaded admin images (kept locally, not in git)
 /public/uploads/*

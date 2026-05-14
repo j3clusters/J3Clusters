@@ -38,7 +38,9 @@ export function RegisterForm() {
       }
 
       form.reset();
-      setMessage("Registration successful. You can now post your property.");
+      setMessage(
+        "Registration successful. On the post-property form, your name, email, phone, and city will match this signup — adjust only if the listing contact should differ.",
+      );
       setTimeout(() => router.push("/post-property"), 700);
     } catch {
       setMessage("Network error. Please try again.");

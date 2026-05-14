@@ -40,6 +40,8 @@ type SubmissionReviewModalProps = {
   submission: SubmissionReviewData;
   approveAction: ServerAction;
   rejectAction: ServerAction;
+  markReviewedAction: ServerAction;
+  reviewedAtIso: string | null;
 };
 
 function formatPriceInr(value: number) {
@@ -64,6 +66,8 @@ export function SubmissionReviewModal({
   submission,
   approveAction,
   rejectAction,
+  markReviewedAction,
+  reviewedAtIso,
 }: SubmissionReviewModalProps) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
@@ -133,6 +137,16 @@ export function SubmissionReviewModal({
                 <p className="edit-modal-subtitle">
                   {submission.ownerName} · {submission.type} in {submission.city}
                 </p>
+                {reviewedAtIso ? (
+                  <p className="submission-review-banner submission-review-banner-done">
+                    Review recorded — you can approve to publish this listing.
+                  </p>
+                ) : (
+                  <p className="submission-review-banner submission-review-banner-pending">
+                    Review the details below, then use <strong>Mark as reviewed</strong>{" "}
+                    before approving.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -293,16 +307,29 @@ export function SubmissionReviewModal({
                   Reject
                 </ConfirmSubmitButton>
               </form>
-              <form action={approveAction}>
-                <ConfirmSubmitButton
-                  variant="primary"
-                  title="Approve & publish"
-                  confirmLabel="Approve & publish"
-                  confirmMessage={`Publish "${submission.type} in ${submission.city}" as a live listing?`}
-                >
-                  Approve & publish
-                </ConfirmSubmitButton>
-              </form>
+              {!reviewedAtIso ? (
+                <form action={markReviewedAction}>
+                  <ConfirmSubmitButton
+                    variant="primary"
+                    title="Mark submission as reviewed"
+                    confirmLabel="Mark as reviewed"
+                    confirmMessage="Record that you have reviewed this submission? You can then approve to publish it as a live listing."
+                  >
+                    Mark as reviewed
+                  </ConfirmSubmitButton>
+                </form>
+              ) : (
+                <form action={approveAction}>
+                  <ConfirmSubmitButton
+                    variant="primary"
+                    title="Approve & publish"
+                    confirmLabel="Approve & publish"
+                    confirmMessage={`Publish "${submission.type} in ${submission.city}" as a live listing?`}
+                  >
+                    Approve & publish
+                  </ConfirmSubmitButton>
+                </form>
+              )}
             </div>
           </div>
         </div>

@@ -113,6 +113,7 @@ export async function POST(request: Request) {
   try {
     await prisma.propertySubmission.create({
       data: {
+        appUserId: session.sub,
         ownerName: parsed.data.ownerName,
         ownerEmail: parsed.data.ownerEmail,
         ownerPhone: parsed.data.ownerPhone,

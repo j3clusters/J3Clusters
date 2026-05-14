@@ -20,10 +20,10 @@ export function Footer() {
         <div>
           <p className="footer-heading">Explore</p>
           <p>
-            <Link href="/listings">Buy a home</Link>
+            <Link href="/listings/buy">Buy a home</Link>
           </p>
           <p>
-            <Link href="/listings">Rent a property</Link>
+            <Link href="/listings/rent">Rent a property</Link>
           </p>
           <p>
             <Link href="/register">Sell property</Link>
