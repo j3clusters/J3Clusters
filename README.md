@@ -73,7 +73,7 @@ The seed script loads initial published listings from `src/data/listings.ts`, th
 ## Production (go live)
 
 1. Provision **PostgreSQL** (Vercel Postgres, Neon, RDS, etc.) and set `DATABASE_URL` in the host’s environment.
-2. Set **`NEXT_PUBLIC_APP_URL`** to your public origin (for example `https://your-domain.com`) so password recovery links point to your site.
+2. Set **`NEXT_PUBLIC_APP_URL`** to your public origin **with no trailing slash**. Until you attach a custom domain, use Vercel’s temporary URL (for example `https://your-project-name.vercel.app` from the deployment). After DNS for your real domain is ready, switch it to `https://j3clusters.com` (or `www`) and redeploy so email links stay correct.
 3. Configure **[Resend](https://resend.com)**: set **`RESEND_API_KEY`** and **`RESEND_FROM_EMAIL`**. In production, forgot-password returns **503** until both are set, so misconfiguration is obvious. In development, the API shows a **setup hint** and prints the reset URL in the **terminal** when email is not configured.
 4. **Password reset email troubleshooting**: Use a **verified sender domain** in Resend (or their test `onboarding@resend.dev`, which only delivers to **your own** Resend-account email). Check the **spam** folder. Watch **server logs** for `[password-reset] Resend API error` if the API rejects the send. Ensure **`NEXT_PUBLIC_APP_URL`** matches your live site so links in the email are correct.
 5. Set **`USER_JWT_SECRET`** and **`ADMIN_JWT_SECRET`** (each 32+ random characters) in production.
