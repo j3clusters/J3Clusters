@@ -12,7 +12,7 @@ export function getAdminJwtSecretBytes(): Uint8Array {
   }
 
   throw new Error(
-    "ADMIN_JWT_SECRET is missing or shorter than 32 characters. Add it to your .env.local file."
+    "ADMIN_JWT_SECRET is missing or shorter than 32 characters. Set it in .env.local (dev) or Vercel Project → Settings → Environment Variables (production).",
   );
 }
 
@@ -35,6 +35,6 @@ export function getUserJwtSecretBytes(): Uint8Array {
   }
 
   throw new Error(
-    "USER_JWT_SECRET (or ADMIN_JWT_SECRET) is missing or shorter than 32 characters. Add it to your .env.local file."
+    "USER_JWT_SECRET (or ADMIN_JWT_SECRET) is missing or shorter than 32 characters. Set it in .env.local (dev) or Vercel Project → Settings → Environment Variables (production).",
   );
 }

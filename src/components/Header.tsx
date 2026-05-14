@@ -7,8 +7,17 @@ import { UserLogoutButton } from "@/components/UserLogoutButton";
 
 export async function Header() {
   const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
-  const session = await verifyUserJwt(token);
-  const isOwner = Boolean(session);
+  let isOwner = false;
+  try {
+    const session = await verifyUserJwt(token);
+    isOwner = Boolean(session);
+  } catch (err) {
+    // Missing/invalid JWT env on Vercel would otherwise 500 every page (Header is global).
+    console.error(
+      "[Header] User session check failed — set ADMIN_JWT_SECRET and USER_JWT_SECRET (32+ chars each) on the host:",
+      err,
+    );
+  }
 
   return (
     <header className="site-header">
