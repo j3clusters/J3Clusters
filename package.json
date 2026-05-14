@@ -15,7 +15,8 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:info": "npx -y dotenv-cli@7.4.2 -e .env.local -- node scripts/print-db-target.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
