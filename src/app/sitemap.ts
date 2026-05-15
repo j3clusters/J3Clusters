@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ListingStatus } from "@prisma/client";
 
+import { listings as bundledListings } from "@/data/listings";
 import { getAppBaseUrl } from "@/lib/app-base-url";
 import { prisma } from "@/lib/prisma";
 
@@ -9,12 +10,20 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getAppBaseUrl();
 
-  const listings = await prisma.listing.findMany({
+  const rows = await prisma.listing.findMany({
     where: { status: ListingStatus.PUBLISHED },
     select: { id: true, updatedAt: true },
     take: 5000,
     orderBy: { updatedAt: "desc" },
   });
+
+  const listings =
+    rows.length > 0
+      ? rows
+      : bundledListings.map((listing) => ({
+          id: listing.id,
+          updatedAt: new Date(listing.updatedAt),
+        }));
 
   const core: MetadataRoute.Sitemap = [
     { url: base, lastModified: new Date(), changeFrequency: "daily", priority: 1 },

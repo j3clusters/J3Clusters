@@ -1,18 +1,11 @@
 import Link from "next/link";
-import { ListingStatus } from "@prisma/client";
 
 import { PropertyCard } from "@/components/PropertyCard";
-import { prismaListingToApp } from "@/lib/listing-map";
-import { prisma } from "@/lib/prisma";
+import { loadPublishedAppListingsOrdered } from "@/lib/listing-catalog";
 
 export default async function HomePage() {
-  const rows = await prisma.listing.findMany({
-    where: { status: ListingStatus.PUBLISHED },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    take: 6,
-  });
-
-  const featured = rows.map(prismaListingToApp);
+  const ordered = await loadPublishedAppListingsOrdered();
+  const featured = ordered.slice(0, 6);
   const citiesCount = new Set(featured.map((item) => item.city)).size;
   const popularCities = Array.from(new Set(featured.map((item) => item.city))).slice(
     0,

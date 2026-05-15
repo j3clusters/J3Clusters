@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ListingStatus } from "@prisma/client";
+import { ListingPurpose } from "@prisma/client";
 
 import { PropertyCard } from "@/components/PropertyCard";
 import { PropertyDetailFacts } from "@/components/PropertyDetailFacts";
@@ -10,8 +10,7 @@ import {
   canViewListingContactDetails,
   redactListingContact,
 } from "@/lib/listing-contact-access";
-import { prismaListingToApp } from "@/lib/listing-map";
-import { prisma } from "@/lib/prisma";
+import { loadPublishedListingById } from "@/lib/listing-catalog";
 import { fetchSimilarListings } from "@/lib/similar-listings";
 
 type PropertyDetailPageProps = {
@@ -32,16 +31,14 @@ export default async function PropertyDetailPage({
 }: PropertyDetailPageProps) {
   const { id } = await params;
 
-  const row = await prisma.listing.findFirst({
-    where: { id, status: ListingStatus.PUBLISHED },
-  });
+  const rawListing = await loadPublishedListingById(id);
 
-  if (!row) {
+  if (!rawListing) {
     notFound();
   }
 
   const canViewContact = await canViewListingContactDetails();
-  const item = redactListingContact(prismaListingToApp(row), canViewContact);
+  const item = redactListingContact(rawListing, canViewContact);
   const gallery = item.imageUrls.length ? item.imageUrls : [item.image];
   const isRent = item.purpose === "Rent" || item.type === "PG";
   const priceLabel = isRent ? "Monthly rent" : "Price";
@@ -50,7 +47,7 @@ export default async function PropertyDetailPage({
   const similarRaw = await fetchSimilarListings(
     id,
     item.city,
-    row.purpose,
+    rawListing.purpose as ListingPurpose,
     item.type,
   );
   const similar = similarRaw.map((listing) =>
@@ -91,7 +88,7 @@ export default async function PropertyDetailPage({
           <PropertyDetailFacts
             item={item}
             listingId={id}
-            consultantPhoneOnFile={row.ownerPhone}
+            consultantPhoneOnFile={rawListing.ownerPhone}
             canViewContact={canViewContact}
           />
         </div>
