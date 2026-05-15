@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ListingStatus, SubmissionStatus } from "@prisma/client";
 
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
@@ -313,12 +313,17 @@ export default async function AdminDashboardPage(props: PageProps) {
   const safeCpage = Math.min(currentCpage, leadsTotalPages);
 
   return (
-    <div className="admin-portal">
-      <header className="admin-topbar">
+    <div className="admin-portal admin-dashboard">
+      <header className="admin-topbar admin-dashboard-topbar">
         <div className="container admin-topbar-inner">
           <div className="admin-topbar-brand">
-            <span className="admin-topbar-badge">Admin</span>
-            <h1 className="admin-topbar-title">Operations dashboard</h1>
+            <span className="admin-topbar-badge">J3 Clusters</span>
+            <div>
+              <h1 className="admin-topbar-title">Operations dashboard</h1>
+              <p className="admin-topbar-sub">
+                Review submissions, publish listings, and manage leads
+              </p>
+            </div>
           </div>
           <div className="admin-topbar-actions">
             <Link
@@ -335,8 +340,54 @@ export default async function AdminDashboardPage(props: PageProps) {
       </header>
 
       <main className="admin-portal-main section">
-      <section className="admin-panel">
-        <h2 className="admin-panel-title">Property submissions</h2>
+        <nav className="admin-quick-nav" aria-label="Jump to section">
+          <a href="#submissions">Submissions</a>
+          <a href="#listings">Listings</a>
+          <a href="#recycle">Recycle bin</a>
+          <a href="#leads">Leads</a>
+          <a href="#audit">Audit log</a>
+        </nav>
+
+        <div className="admin-overview-strip">
+          <div className="admin-metrics admin-dashboard-metrics">
+            <div className="admin-metric-card admin-metric-pending">
+              <span className="admin-metric-label">Pending</span>
+              <strong>{pendingCount}</strong>
+              <span className="admin-metric-hint">In queue</span>
+            </div>
+            <div className="admin-metric-card admin-metric-review">
+              <span className="admin-metric-label">Awaiting review</span>
+              <strong>{pendingAwaitingReviewCount}</strong>
+              <span className="admin-metric-hint">Needs attention</span>
+            </div>
+            <div className="admin-metric-card admin-metric-approved">
+              <span className="admin-metric-label">Approved</span>
+              <strong>{approvedCount}</strong>
+              <span className="admin-metric-hint">Processed</span>
+            </div>
+            <div className="admin-metric-card admin-metric-rejected">
+              <span className="admin-metric-label">Rejected</span>
+              <strong>{rejectedCount}</strong>
+              <span className="admin-metric-hint">Not published</span>
+            </div>
+            <div className="admin-metric-card admin-metric-leads">
+              <span className="admin-metric-label">Contact leads</span>
+              <strong>{leadsTotal}</strong>
+              <span className="admin-metric-hint">Active inquiries</span>
+            </div>
+            <div className="admin-metric-card admin-metric-live">
+              <span className="admin-metric-label">Live listings</span>
+              <strong>{publishedListings.length}</strong>
+              <span className="admin-metric-hint">On public site</span>
+            </div>
+          </div>
+        </div>
+
+      <section id="submissions" className="admin-panel admin-panel-submissions">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Property submissions</h2>
+          <span className="admin-panel-chip">{submissionTotal} total</span>
+        </div>
         <p className="admin-panel-desc">
           New posts are <strong>PENDING</strong>. Open <strong>Review</strong>, then{" "}
           <strong>Mark as reviewed</strong> before <strong>Approve &amp; publish</strong>{" "}
@@ -347,7 +398,7 @@ export default async function AdminDashboardPage(props: PageProps) {
           <input
             type="text"
             name="q"
-            placeholder="Search owner, city, email, or phone"
+            placeholder="Search consultant, city, email, or phone"
             defaultValue={searchText}
           />
           <select name="status" defaultValue={activeStatus}>
@@ -390,28 +441,6 @@ export default async function AdminDashboardPage(props: PageProps) {
             Rejected
           </Link>
         </div>
-        <div className="admin-metrics">
-          <div className="admin-metric-card">
-            <span>Pending</span>
-            <strong>{pendingCount}</strong>
-          </div>
-          <div className="admin-metric-card">
-            <span>Awaiting review</span>
-            <strong>{pendingAwaitingReviewCount}</strong>
-          </div>
-          <div className="admin-metric-card">
-            <span>Approved</span>
-            <strong>{approvedCount}</strong>
-          </div>
-          <div className="admin-metric-card">
-            <span>Rejected</span>
-            <strong>{rejectedCount}</strong>
-          </div>
-          <div className="admin-metric-card">
-            <span>Leads</span>
-            <strong>{leadsTotal}</strong>
-          </div>
-        </div>
         <p className="admin-panel-desc admin-panel-meta">
           Showing {submissions.length} of {submissionTotal} submissions
           (page {safePage} of {totalPages})
@@ -422,7 +451,7 @@ export default async function AdminDashboardPage(props: PageProps) {
               <tr>
                 <th className="admin-th">Select</th>
                 <th className="admin-th">When</th>
-                <th className="admin-th">Owner</th>
+                <th className="admin-th">Consultant</th>
                 <th className="admin-th">Type</th>
                 <th className="admin-th">Purpose</th>
                 <th className="admin-th">City</th>
@@ -452,7 +481,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                         className="secondary-btn"
                         title="Reject submissions"
                         confirmLabel="Reject"
-                        confirmMessage="Reject all selected submissions? Owners will not see these go live."
+                        confirmMessage="Reject all selected submissions? Consultants will not see these go live."
                       >
                         Bulk reject
                       </ConfirmSubmitButton>
@@ -477,7 +506,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                         aria-label={`Select ${submission.ownerName} for bulk action`}
                       />
                     ) : (
-                      <span className="admin-text-muted">—</span>
+                      <span className="admin-text-muted">â€”</span>
                     )}
                   </td>
                   <td className="admin-td">{formatUtc(submission.createdAt)}</td>
@@ -526,7 +555,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       {submission.status === "PENDING" ? (
                         submission.reviewedAt ? (
                           <span className="admin-text-muted admin-status-sub">
-                            Reviewed · {formatUtc(submission.reviewedAt)}
+                            Reviewed Â· {formatUtc(submission.reviewedAt)}
                           </span>
                         ) : (
                           <span className="admin-text-muted admin-status-sub">
@@ -623,7 +652,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                             className="secondary-btn"
                             title="Reject submission"
                             confirmLabel="Reject"
-                            confirmMessage="Reject this submission? The owner will not see it go live."
+                            confirmMessage="Reject this submission? The consultant will not see it go live."
                           >
                             Reject
                           </ConfirmSubmitButton>
@@ -742,8 +771,11 @@ export default async function AdminDashboardPage(props: PageProps) {
         ) : null}
       </section>
 
-      <section className="admin-panel">
-        <h2 className="admin-panel-title">Published listings</h2>
+      <section id="listings" className="admin-panel admin-panel-listings">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Published listings</h2>
+          <span className="admin-panel-chip">{publishedListings.length} live</span>
+        </div>
         <p className="admin-panel-desc">
           Deleting moves a listing to the recycle bin for {RECYCLE_BIN_RETENTION_DAYS}{" "}
           days. Use the tabs to filter by purpose (For sale or For rent).
@@ -800,7 +832,7 @@ export default async function AdminDashboardPage(props: PageProps) {
           {filteredPublishedListings.length} published listings
           {activeView === "ALL" ? "" : ` (${activeView === "RENT" ? "For rent" : "For sale"})`}
           {listingsTotalPages > 1
-            ? ` • page ${safeLpage} of ${listingsTotalPages}`
+            ? ` â€¢ page ${safeLpage} of ${listingsTotalPages}`
             : ""}
         </p>
         <div className="admin-table-wrap">
@@ -840,7 +872,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                   <td className="admin-td">
                     <div className="admin-owner-cell">
                       <span>
-                        {listing.approvedAt ? formatUtc(listing.approvedAt) : "—"}
+                        {listing.approvedAt ? formatUtc(listing.approvedAt) : "â€”"}
                       </span>
                       <span className="admin-text-muted">
                         {listing.approvedByEmail ?? "Unknown admin"}
@@ -977,10 +1009,13 @@ export default async function AdminDashboardPage(props: PageProps) {
         ) : null}
       </section>
 
-      <section className="admin-panel">
-        <h2 className="admin-panel-title">
-          Recycle bin ({RECYCLE_BIN_RETENTION_DAYS} days)
-        </h2>
+      <section id="recycle" className="admin-panel admin-panel-recycle">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">
+            Recycle bin ({RECYCLE_BIN_RETENTION_DAYS} days)
+          </h2>
+          <span className="admin-panel-chip">{sortedRecycleRows.length} items</span>
+        </div>
         <p className="admin-panel-desc">
           Deleted listings, submissions, and contact leads stay here for{" "}
           {RECYCLE_BIN_RETENTION_DAYS} days, then are removed automatically.
@@ -1028,7 +1063,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       <>
                         <div>{row.submission.ownerName}</div>
                         <span className="admin-text-muted">
-                          {listingTypeLabel(row.submission.type)} ·{" "}
+                          {listingTypeLabel(row.submission.type)} Â·{" "}
                           {row.submission.city}
                         </span>
                       </>
@@ -1044,7 +1079,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       ? row.listing.price.toLocaleString("en-IN")
                       : row.kind === "submission"
                         ? row.submission.price.toLocaleString("en-IN")
-                        : "—"}
+                        : "â€”"}
                   </td>
                   <td className="admin-td">
                     <div className="admin-action-stack">
@@ -1206,8 +1241,11 @@ export default async function AdminDashboardPage(props: PageProps) {
         ) : null}
       </section>
 
-      <section className="admin-panel">
-        <h2 className="admin-panel-title">Contact leads</h2>
+      <section id="leads" className="admin-panel admin-panel-leads">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Contact leads</h2>
+          <span className="admin-panel-chip">{leadsTotal} active</span>
+        </div>
         <p className="admin-panel-desc">
           Inquiries captured from the Contact page. Deleting moves a lead to the
           recycle bin for {RECYCLE_BIN_RETENTION_DAYS} days.
@@ -1248,7 +1286,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                     </div>
                   </td>
                   <td className="admin-td admin-td-clip">
-                    {lead.message ?? "—"}
+                    {lead.message ?? "â€”"}
                   </td>
                   <td className="admin-td">
                     <form action={deleteContactLeadAction.bind(null, lead.id)}>
@@ -1315,8 +1353,11 @@ export default async function AdminDashboardPage(props: PageProps) {
         ) : null}
       </section>
 
-      <section className="admin-panel">
-        <h2 className="admin-panel-title">Admin audit log</h2>
+      <section id="audit" className="admin-panel admin-panel-audit">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Admin audit log</h2>
+          <span className="admin-panel-chip">Last 50 events</span>
+        </div>
         <p className="admin-panel-desc">
           Last 50 admin actions across submissions, listings, leads, and recycle
           bin operations.
@@ -1342,7 +1383,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                     {log.targetType} / {log.targetId}
                   </td>
                   <td className="admin-td admin-td-clip">
-                    {log.message ?? "—"}
+                    {log.message ?? "â€”"}
                   </td>
                 </tr>
               ))}
@@ -1359,7 +1400,7 @@ export default async function AdminDashboardPage(props: PageProps) {
       </section>
 
       <p className="admin-portal-footer">
-        <Link href="/">← Back to website</Link>
+        <Link href="/">â† Back to website</Link>
       </p>
       </main>
     </div>

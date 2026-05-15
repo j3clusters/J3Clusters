@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+import { CONSULTANT } from "@/lib/consultant-labels";
+
 export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +62,11 @@ export default function LoginPage() {
     <main className="portal-auth-page">
       <div className="portal-auth-card">
         <div className="portal-auth-header">
-          <span className="portal-auth-badge">Owner access</span>
+          <span className="portal-auth-badge">{CONSULTANT.loginBadge}</span>
           <h1>Welcome back</h1>
           <p className="portal-auth-sub">
-            Sign in to post properties and view your submissions under My
-            properties.
+            Sign in as a {CONSULTANT.role.toLowerCase()} to post properties and
+            track submissions under My properties.
           </p>
         </div>
         <form className="stacked-form" onSubmit={onSubmit}>
@@ -95,7 +97,8 @@ export default function LoginPage() {
           <span className="portal-auth-forgot-hint">Recover or reset via email.</span>
         </p>
         <div className="portal-auth-footer">
-          New user? <Link href="/register">Create an account</Link>
+          New {CONSULTANT.role.toLowerCase()}?{" "}
+          <Link href="/register">Register free</Link>
           <p className="portal-auth-alt">
             Staff: use <Link href="/admin/login">Admin login</Link> for the
             operations dashboard.

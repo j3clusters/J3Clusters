@@ -153,7 +153,7 @@ export function SubmissionReviewModal({
             <div className="edit-modal-body">
               <div className="submission-review-content">
                 <section className="submission-review-section">
-                  <h3>Owner</h3>
+                  <h3>Property consultant</h3>
                   <dl className="submission-review-grid">
                     <div>
                       <dt>Name</dt>
@@ -302,7 +302,7 @@ export function SubmissionReviewModal({
                   className="secondary-btn"
                   title="Reject submission"
                   confirmLabel="Reject"
-                  confirmMessage="Reject this submission? The owner will not see it go live."
+                  confirmMessage="Reject this submission? The property consultant will not see it go live."
                 >
                   Reject
                 </ConfirmSubmitButton>

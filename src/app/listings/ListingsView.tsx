@@ -398,7 +398,6 @@ export function ListingsView({
                 key={item.id}
                 item={item}
                 variant="list"
-                openImageInNewTab
                 compareSlot={
                   <label className="compare-check">
                     <input

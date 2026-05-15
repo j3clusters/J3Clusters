@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
     <main className="portal-auth-page">
       <div className="portal-auth-card">
         <div className="portal-auth-header">
-          <span className="portal-auth-badge">Owner</span>
+          <span className="portal-auth-badge">Property consultant</span>
           <h1>Password recovery</h1>
           <p className="portal-auth-sub">
             Enter the email you used to register. We will send you a link to reset

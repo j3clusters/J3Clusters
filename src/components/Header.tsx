@@ -7,12 +7,11 @@ import { UserLogoutButton } from "@/components/UserLogoutButton";
 
 export async function Header() {
   const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
-  let isOwner = false;
+  let isConsultant = false;
   try {
     const session = await verifyUserJwt(token);
-    isOwner = Boolean(session);
+    isConsultant = Boolean(session);
   } catch (err) {
-    // Missing/invalid JWT env on Vercel would otherwise 500 every page (Header is global).
     console.error(
       "[Header] User session check failed — set ADMIN_JWT_SECRET and USER_JWT_SECRET (32+ chars each) on the host:",
       err,
@@ -27,7 +26,12 @@ export async function Header() {
             India&apos;s modern property marketplace for buying, renting, and
             selling
           </span>
-          <Link href="/contact">Need help?</Link>
+          <span className="top-strip-links">
+            {!isConsultant ? (
+              <Link href="/register">Register</Link>
+            ) : null}
+            <Link href="/contact">Need help?</Link>
+          </span>
         </div>
       </div>
       <div className="container nav-wrap">
@@ -53,9 +57,9 @@ export async function Header() {
               <Link href="/listings/rent">Rent</Link>
             </li>
             <li>
-              <Link href={isOwner ? "/post-property" : "/register"}>Sell</Link>
+              <Link href={isConsultant ? "/post-property" : "/register"}>Sell</Link>
             </li>
-            {isOwner ? (
+            {isConsultant ? (
               <>
                 <li>
                   <Link href="/my-properties">My properties</Link>
@@ -72,13 +76,16 @@ export async function Header() {
             ) : (
               <>
                 <li>
-                  <Link href="/register" className="primary-nav-cta">
-                    Post Property Free
-                  </Link>
+                  <Link href="/register">Register</Link>
                 </li>
                 <li>
                   <Link href="/login" className="muted-link">
                     Login
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/register" className="primary-nav-cta">
+                    Post property free
                   </Link>
                 </li>
               </>

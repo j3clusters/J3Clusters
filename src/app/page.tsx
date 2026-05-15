@@ -42,7 +42,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <strong>24h</strong>
-                  <span>owner response target</span>
+                  <span>consultant response target</span>
                 </div>
               </div>
             </div>
@@ -116,7 +116,7 @@ export default async function HomePage() {
                       <path d="M20 6 9 17l-5-5" />
                     </svg>
                   </span>
-                  Owner-assisted journey
+                  Consultant-assisted journey
                 </li>
                 <li>
                   <span
@@ -294,7 +294,7 @@ export default async function HomePage() {
           </div>
           <div className="trust-strip">
             <span>100% digital inquiry workflow</span>
-            <span>Verified owner submissions</span>
+            <span>Verified consultant listings</span>
             <span>Dedicated support team</span>
           </div>
         </div>
@@ -349,7 +349,7 @@ export default async function HomePage() {
           </article>
           <article className="step-card">
             <strong>3. Close confidently</strong>
-            <p>Connect with owners and agents through one streamlined workflow.</p>
+            <p>Connect with property consultants through one streamlined workflow.</p>
           </article>
         </div>
       </section>
@@ -377,12 +377,16 @@ export default async function HomePage() {
           <div>
             <h2>Have a property to sell or rent?</h2>
             <p className="meta">
-              Reach serious buyers with verified listing workflow and login access.
+              Register as a property consultant — free listings with verified
+              workflow.
             </p>
           </div>
           <div className="cta-actions">
             <Link href="/register" className="primary-nav-cta">
-              Post Property Free
+              Register free
+            </Link>
+            <Link href="/login" className="cta-contact-btn">
+              Sign in
             </Link>
             <Link
               href="/contact"

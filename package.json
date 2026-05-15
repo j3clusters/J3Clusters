@@ -11,9 +11,9 @@
     "smoke": "node scripts/smoke-check.mjs",
     "postinstall": "prisma generate",
     "deploy": "vercel --prod",
-    "db:push": "prisma db push",
-    "db:seed": "prisma db seed",
-    "db:studio": "prisma studio",
+    "db:push": "npx -y dotenv-cli@7.4.2 -e .env -e .env.local -- prisma db push",
+    "db:seed": "npx -y dotenv-cli@7.4.2 -e .env -e .env.local -- prisma db seed",
+    "db:studio": "npx -y dotenv-cli@7.4.2 -e .env -e .env.local -- prisma studio",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:info": "npx -y dotenv-cli@7.4.2 -e .env.local -- node scripts/print-db-target.mjs"

@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
       <main className="portal-auth-page">
         <div className="portal-auth-card">
           <div className="portal-auth-header">
-            <span className="portal-auth-badge">Owner</span>
+            <span className="portal-auth-badge">Property consultant</span>
             <h1>Set a new password</h1>
             <p className="portal-auth-sub">
               Choose a strong password you have not used elsewhere.

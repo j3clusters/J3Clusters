@@ -8,7 +8,6 @@ type PropertyCardProps = {
   item: Listing;
   variant?: "grid" | "list";
   compareSlot?: React.ReactNode;
-  openImageInNewTab?: boolean;
 };
 
 function estimateEmi(price: number) {
@@ -19,7 +18,6 @@ export function PropertyCard({
   item,
   variant = "grid",
   compareSlot,
-  openImageInNewTab = false,
 }: PropertyCardProps) {
   const listMode = variant === "list";
   const emi = estimateEmi(item.price);
@@ -32,12 +30,7 @@ export function PropertyCard({
 
   return (
     <article className={`card ${listMode ? "card-list" : ""}`}>
-      <Link
-        href={`/property/${item.id}`}
-        target={openImageInNewTab ? "_blank" : undefined}
-        rel={openImageInNewTab ? "noopener noreferrer" : undefined}
-        aria-label={`Open ${item.title} details`}
-      >
+      <Link href={`/property/${item.id}`} aria-label={`Open ${item.title} details`}>
         <div className="card-image-wrap">
           <Image src={item.image} alt={item.title} width={600} height={340} />
           <div className="card-image-overlay">

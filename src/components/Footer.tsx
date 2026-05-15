@@ -26,19 +26,22 @@ export function Footer() {
             <Link href="/listings/rent">Rent a property</Link>
           </p>
           <p>
-            <Link href="/register">Sell property</Link>
+            <Link href="/register">List as consultant</Link>
           </p>
         </div>
         <div>
-          <p className="footer-heading">Support</p>
+          <p className="footer-heading">Consultants</p>
+          <p>
+            <Link href="/register">Register free</Link>
+          </p>
+          <p>
+            <Link href="/login">Consultant login</Link>
+          </p>
           <p>
             <Link href="/contact">Contact us</Link>
           </p>
           <p>
-            <Link href="/admin/login">Partner login</Link>
-          </p>
-          <p>
-            <Link href="/register">Register</Link>
+            <Link href="/admin/login">Admin login</Link>
           </p>
         </div>
       </div>

@@ -39,7 +39,7 @@ export function RegisterForm() {
 
       form.reset();
       setMessage(
-        "Registration successful. On the post-property form, your name, email, phone, and city will match this signup — adjust only if the listing contact should differ.",
+        "Registration successful. You can now post properties as a property consultant. Your contact details will prefill on the listing form.",
       );
       setTimeout(() => router.push("/post-property"), 700);
     } catch {

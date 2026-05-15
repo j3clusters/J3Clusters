@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
         <div className="admin-auth-back">
-          <Link href="/login">← Owner login</Link>
+          <Link href="/login">← Consultant login</Link>
         </div>
       </div>
     </main>

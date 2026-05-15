@@ -6,7 +6,7 @@ type OwnerPortalNavProps = {
 
 export function OwnerPortalNav({ active }: OwnerPortalNavProps) {
   return (
-    <nav className="owner-portal-nav" aria-label="Owner navigation">
+    <nav className="owner-portal-nav" aria-label="Property consultant navigation">
       <h2>Menu</h2>
       <Link
         href="/post-property"

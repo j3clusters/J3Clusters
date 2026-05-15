@@ -100,7 +100,7 @@ export default async function MyPropertiesPage() {
       <header className="owner-portal-hero">
         <div className="container owner-portal-hero-inner">
           <div>
-            <span className="owner-portal-badge">Owner</span>
+            <span className="owner-portal-badge">Property consultant</span>
             <h1>My properties</h1>
             <p>
               Submissions you have sent from this account and anything already

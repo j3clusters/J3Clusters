@@ -74,10 +74,10 @@ export function EditSubmissionFormFields({
       <input type="hidden" name="id" value={defaults.id} />
 
       <fieldset className="edit-listing-section">
-        <legend>Owner contact</legend>
+        <legend>Property consultant contact</legend>
         <div className="edit-modal-grid">
           <label className="edit-modal-field">
-            <span>Owner name</span>
+            <span>Property consultant name</span>
             <input
               type="text"
               name="ownerName"
