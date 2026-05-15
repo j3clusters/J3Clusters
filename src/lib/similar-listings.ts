@@ -65,56 +65,64 @@ export async function fetchSimilarListings(
   type: string,
   limit = 4,
 ): Promise<Listing[]> {
-  const primary = await prisma.listing.findMany({
-    where: {
-      id: { not: listingId },
-      status: ListingStatus.PUBLISHED,
-      city,
-      purpose,
-      type: type as "Apartment" | "Villa" | "Plot" | "PG",
-    },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    take: limit,
-  });
+  try {
+    const primary = await prisma.listing.findMany({
+      where: {
+        id: { not: listingId },
+        status: ListingStatus.PUBLISHED,
+        city,
+        purpose,
+        type: type as "Apartment" | "Villa" | "Plot" | "PG",
+      },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take: limit,
+    });
 
-  if (primary.length >= limit) {
-    return primary.map(prismaListingToApp);
-  }
+    if (primary.length >= limit) {
+      return primary.map(prismaListingToApp);
+    }
 
-  const dbPublishedCount = await prisma.listing.count({
-    where: { status: ListingStatus.PUBLISHED },
-  });
-  if (dbPublishedCount === 0) {
+    const dbPublishedCount = await prisma.listing.count({
+      where: { status: ListingStatus.PUBLISHED },
+    });
+    if (dbPublishedCount === 0) {
+      return similarFromBundled(listingId, city, purpose, type, limit);
+    }
+
+    const excludeIds = [listingId, ...primary.map((row) => row.id)];
+    const sameCity = await prisma.listing.findMany({
+      where: {
+        id: { notIn: excludeIds },
+        status: ListingStatus.PUBLISHED,
+        city,
+        purpose,
+      },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take: limit - primary.length,
+    });
+
+    const combined = [...primary, ...sameCity];
+    if (combined.length >= limit) {
+      return combined.map(prismaListingToApp);
+    }
+
+    const excludeAll = [...excludeIds, ...sameCity.map((row) => row.id)];
+    const fallback = await prisma.listing.findMany({
+      where: {
+        id: { notIn: excludeAll },
+        status: ListingStatus.PUBLISHED,
+        purpose,
+      },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      take: limit - combined.length,
+    });
+
+    return [...combined, ...fallback].map(prismaListingToApp);
+  } catch (err) {
+    console.warn(
+      "[similar-listings] Database query failed; using bundled suggestions.",
+      err,
+    );
     return similarFromBundled(listingId, city, purpose, type, limit);
   }
-
-  const excludeIds = [listingId, ...primary.map((row) => row.id)];
-  const sameCity = await prisma.listing.findMany({
-    where: {
-      id: { notIn: excludeIds },
-      status: ListingStatus.PUBLISHED,
-      city,
-      purpose,
-    },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    take: limit - primary.length,
-  });
-
-  const combined = [...primary, ...sameCity];
-  if (combined.length >= limit) {
-    return combined.map(prismaListingToApp);
-  }
-
-  const excludeAll = [...excludeIds, ...sameCity.map((row) => row.id)];
-  const fallback = await prisma.listing.findMany({
-    where: {
-      id: { notIn: excludeAll },
-      status: ListingStatus.PUBLISHED,
-      purpose,
-    },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    take: limit - combined.length,
-  });
-
-  return [...combined, ...fallback].map(prismaListingToApp);
 }

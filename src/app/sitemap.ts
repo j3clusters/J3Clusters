@@ -10,12 +10,17 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getAppBaseUrl();
 
-  const rows = await prisma.listing.findMany({
-    where: { status: ListingStatus.PUBLISHED },
-    select: { id: true, updatedAt: true },
-    take: 5000,
-    orderBy: { updatedAt: "desc" },
-  });
+  let rows: { id: string; updatedAt: Date }[] = [];
+  try {
+    rows = await prisma.listing.findMany({
+      where: { status: ListingStatus.PUBLISHED },
+      select: { id: true, updatedAt: true },
+      take: 5000,
+      orderBy: { updatedAt: "desc" },
+    });
+  } catch (err) {
+    console.warn("[sitemap] Listing query failed; using bundled URLs.", err);
+  }
 
   const listings =
     rows.length > 0

@@ -13,23 +13,37 @@ export function sortListingsLikeDb(items: Listing[]): Listing[] {
   });
 }
 
-/** Published rows from Postgres, or the bundled StepsStone catalog when the DB has none. */
+/** Published rows from Postgres, or the bundled StepsStone catalog when the DB has none or errors. */
 export async function loadPublishedAppListingsOrdered(): Promise<Listing[]> {
-  const rows = await prisma.listing.findMany({
-    where: { status: ListingStatus.PUBLISHED },
-    orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-  });
-  if (rows.length > 0) {
-    return rows.map(prismaListingToApp);
+  try {
+    const rows = await prisma.listing.findMany({
+      where: { status: ListingStatus.PUBLISHED },
+      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+    });
+    if (rows.length > 0) {
+      return rows.map(prismaListingToApp);
+    }
+  } catch (err) {
+    console.warn(
+      "[listing-catalog] Published listings query failed; using bundled catalog.",
+      err,
+    );
   }
   return sortListingsLikeDb([...bundledListings]);
 }
 
 export async function loadPublishedListingById(id: string): Promise<Listing | null> {
-  const row = await prisma.listing.findFirst({
-    where: { id, status: ListingStatus.PUBLISHED },
-  });
-  if (row) return prismaListingToApp(row);
+  try {
+    const row = await prisma.listing.findFirst({
+      where: { id, status: ListingStatus.PUBLISHED },
+    });
+    if (row) return prismaListingToApp(row);
+  } catch (err) {
+    console.warn(
+      "[listing-catalog] Listing lookup failed; checking bundled catalog.",
+      err,
+    );
+  }
   return bundledListings.find((listing) => listing.id === id) ?? null;
 }
 
