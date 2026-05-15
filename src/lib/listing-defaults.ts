@@ -12,6 +12,7 @@ export const LISTING_FIELD_DEFAULTS: Pick<
   | "ownerName"
   | "ownerEmail"
   | "ownerPhone"
+  | "ownerPhotoUrl"
   | "isFeatured"
   | "postedAt"
   | "updatedAt"
@@ -26,6 +27,7 @@ export const LISTING_FIELD_DEFAULTS: Pick<
   ownerName: "",
   ownerEmail: "",
   ownerPhone: "",
+  ownerPhotoUrl: "",
   isFeatured: false,
   postedAt: "",
   updatedAt: "",

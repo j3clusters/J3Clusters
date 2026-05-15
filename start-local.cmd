@@ -2,6 +2,9 @@
 setlocal
 cd /d "%~dp0"
 
+rem Next.js sets NODE_ENV itself — never force production for local scripts.
+set NODE_ENV=development
+
 echo === J3 Clusters local dev ===
 echo.
 
@@ -22,11 +25,12 @@ if %ERRORLEVEL% equ 0 (
   echo.
 )
 
-echo Applying schema ^(prisma db push^)...
-call npm.cmd run db:push
+echo Syncing schema ^(prisma db push --accept-data-loss^)...
+echo This aligns your DB when older columns exist ^(e.g. legacy fields removed from schema^).
+call npm.cmd run db:sync
 if errorlevel 1 (
   echo.
-  echo db:push failed. Ensure DATABASE_URL in .env.local is correct and Postgres is running.
+  echo db:sync failed. Ensure DATABASE_URL in .env.local is correct and Postgres is running.
   pause
   exit /b 1
 )

@@ -4,6 +4,10 @@ import Link from "next/link";
 import { USER_SESSION_COOKIE_NAME } from "@/lib/auth/jwt-cookies";
 import { verifyUserJwt } from "@/lib/auth/verify-session-token";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
+import {
+  buildWhatsAppUrl,
+  SITE_GENERAL_WHATSAPP_MESSAGE,
+} from "@/lib/site-contact";
 
 export async function Header() {
   const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
@@ -18,6 +22,8 @@ export async function Header() {
     );
   }
 
+  const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
+
   return (
     <header className="site-header">
       <div className="top-strip">
@@ -30,6 +36,14 @@ export async function Header() {
             {!isConsultant ? (
               <Link href="/register">Register</Link>
             ) : null}
+            <a
+              href={whatsappHref}
+              className="top-strip-whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
+            </a>
             <Link href="/contact">Need help?</Link>
           </span>
         </div>

@@ -8,5 +8,5 @@ export function getAppBaseUrl(): string {
   if (vercel) {
     return `https://${vercel.replace(/^https?:\/\//, "")}`;
   }
-  return "http://localhost:3000";
+  return "http://localhost:3003";
 }

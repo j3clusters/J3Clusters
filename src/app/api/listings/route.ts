@@ -1,6 +1,10 @@
 import { ListingStatus } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import {
+  canViewListingContactDetails,
+  redactListingContact,
+} from "@/lib/listing-contact-access";
 import { prismaListingToApp } from "@/lib/listing-map";
 import { listingPurposeFor } from "@/lib/listing-purpose";
 import { prisma } from "@/lib/prisma";
@@ -19,7 +23,10 @@ export async function GET(request: Request) {
       : mode === "buy" || mode === "sell"
         ? rows.filter((row) => listingPurposeFor(row) === "Sale")
         : rows;
-  const items = purposeFilteredRows.map(prismaListingToApp);
+  const canViewContact = await canViewListingContactDetails();
+  const items = purposeFilteredRows
+    .map(prismaListingToApp)
+    .map((listing) => redactListingContact(listing, canViewContact));
 
   return NextResponse.json({ items });
 }

@@ -1,4 +1,10 @@
-import { PrismaClient, ListingStatus, ListingType } from "@prisma/client";
+import {
+  PrismaClient,
+  ListingStatus,
+  ListingType,
+  ListingPurpose,
+  FurnishingType,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { listings as seedListings } from "../src/data/listings";
@@ -15,15 +21,27 @@ async function main() {
     data: seedListings.map((l) => ({
       id: l.id,
       title: l.title,
+      purpose: l.purpose as ListingPurpose,
       type: l.type as ListingType,
       city: l.city,
+      address: l.address,
       beds: l.beds,
       baths: l.baths,
+      balconies: l.balconies,
+      parkingSpots: l.parkingSpots,
+      furnishing: l.furnishing as FurnishingType,
+      propertyAgeYears: l.propertyAgeYears,
+      availableFrom: l.availableFrom,
       areaSqft: l.areaSqft,
       price: l.price,
       image: l.image,
       imageUrls: l.imageUrls,
       description: l.description,
+      ownerName: l.ownerName,
+      ownerEmail: l.ownerEmail,
+      ownerPhone: l.ownerPhone,
+      ownerPhotoUrl: l.ownerPhotoUrl,
+      isFeatured: l.isFeatured,
       status: ListingStatus.PUBLISHED,
     })),
   });

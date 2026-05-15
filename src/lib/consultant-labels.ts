@@ -14,5 +14,7 @@ export const CONSULTANT = {
   registerTitle: "Register as a property consultant",
   registerSub:
     "Create your free account to list apartments, villas, plots, and PG stays. No listing fees.",
-  connectMessage: "Our team will connect you with the property consultant.",
+  contactHiddenHint:
+    "Register as a community member to view the consultant mobile number.",
+  contactHiddenCta: "Join as community member",
 } as const;

@@ -1,6 +1,9 @@
 # Dependencies
 /node_modules
 
+# Prisma client (generated locally — engines live here on purpose)
+/src/generated/
+
 # Next.js
 /.next
 /out
@@ -20,6 +23,9 @@
 npm-debug.log*
 .DS_Store
 tsconfig.tsbuildinfo
+
+# StepsStone import media cache (rebuilt by import:stepsstone)
+scripts/.stepsstone-media-cache.json
 
 # Local smoke-test artifacts
 scripts/smoke-*-cookie.txt

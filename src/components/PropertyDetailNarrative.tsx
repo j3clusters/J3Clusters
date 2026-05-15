@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CONSULTANT } from "@/lib/consultant-labels";
 import { formatListingDate } from "@/lib/format";
 import { stripListingPurpose } from "@/lib/listing-purpose";
@@ -27,11 +29,24 @@ export function PropertyDetailDescription({ item }: { item: Listing }) {
   );
 }
 
-export function PropertyDetailListedBy({ item }: { item: Listing }) {
+type PropertyDetailListedByProps = {
+  item: Listing;
+  consultantPhone: string;
+  consultantEmail: string;
+  canViewContact: boolean;
+};
+
+export function PropertyDetailListedBy({
+  item,
+  consultantPhone,
+  consultantEmail,
+  canViewContact,
+}: PropertyDetailListedByProps) {
+  const phone = consultantPhone.trim();
+  const email = consultantEmail.trim();
+  const hasContactOnFile = Boolean(phone || email);
   const hasOwnerContact =
-    item.ownerName.trim() ||
-    item.ownerEmail.trim() ||
-    item.ownerPhone.trim();
+    item.ownerName.trim() || hasContactOnFile || Boolean(item.postedAt.trim());
   const hasPostedMeta = Boolean(item.postedAt.trim());
   const postedLabel = formatListingDate(item.postedAt);
   const updatedLabel = formatListingDate(item.updatedAt);
@@ -53,16 +68,39 @@ export function PropertyDetailListedBy({ item }: { item: Listing }) {
             <dd>{item.ownerName.trim()}</dd>
           </div>
         ) : null}
-        {item.ownerPhone.trim() ? (
+
+        {canViewContact && phone ? (
           <div>
             <dt>Mobile number</dt>
             <dd>
-              <a href={`tel:${item.ownerPhone.trim()}`}>
-                {item.ownerPhone.trim()}
-              </a>
+              <a href={`tel:${phone}`}>{phone}</a>
             </dd>
           </div>
         ) : null}
+
+        {canViewContact && email ? (
+          <div>
+            <dt>Email</dt>
+            <dd>
+              <a href={`mailto:${email}`}>{email}</a>
+            </dd>
+          </div>
+        ) : null}
+
+        {!canViewContact && hasContactOnFile ? (
+          <div>
+            <dt>Contact details</dt>
+            <dd className="consultant-contact-gated">
+              <p className="meta">{CONSULTANT.contactHiddenHint}</p>
+              <p className="consultant-contact-gated-actions">
+                <Link href="/register">{CONSULTANT.contactHiddenCta}</Link>
+                <span aria-hidden="true"> · </span>
+                <Link href="/login">Log in</Link>
+              </p>
+            </dd>
+          </div>
+        ) : null}
+
         {hasPostedMeta ? (
           <div>
             <dt>Posted on</dt>
@@ -73,16 +111,6 @@ export function PropertyDetailListedBy({ item }: { item: Listing }) {
           <div>
             <dt>Last updated</dt>
             <dd>{updatedLabel}</dd>
-          </div>
-        ) : null}
-        {item.ownerEmail.trim() ? (
-          <div>
-            <dt>Email</dt>
-            <dd>
-              <a href={`mailto:${item.ownerEmail.trim()}`}>
-                {item.ownerEmail.trim()}
-              </a>
-            </dd>
           </div>
         ) : null}
       </dl>

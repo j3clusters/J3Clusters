@@ -17,6 +17,7 @@ export type SubmissionReviewData = {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  ownerPhotoUrl: string;
   type: string;
   purpose: "Sale" | "Rent";
   city: string;
@@ -154,6 +155,18 @@ export function SubmissionReviewModal({
               <div className="submission-review-content">
                 <section className="submission-review-section">
                   <h3>Property consultant</h3>
+                  {submission.ownerPhotoUrl.trim() ? (
+                    <div className="submission-review-consultant-photo">
+                      <Image
+                        src={submission.ownerPhotoUrl.trim()}
+                        alt=""
+                        width={64}
+                        height={64}
+                        className="submission-review-consultant-photo-img"
+                        unoptimized={submission.ownerPhotoUrl.trim().startsWith("http")}
+                      />
+                    </div>
+                  ) : null}
                   <dl className="submission-review-grid">
                     <div>
                       <dt>Name</dt>

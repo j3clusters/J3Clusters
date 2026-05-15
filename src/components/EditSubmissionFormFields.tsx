@@ -13,6 +13,7 @@ export type EditSubmissionDefaults = {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  ownerPhotoUrl: string;
   type: ListingType;
   purpose: ListingPurpose;
   city: string;
@@ -102,6 +103,23 @@ export function EditSubmissionFormFields({
               defaultValue={defaults.ownerPhone}
               required
             />
+          </label>
+          <label className="edit-modal-field edit-modal-field-full">
+            <span>Consultant photo (optional)</span>
+            {defaults.ownerPhotoUrl.trim() ? (
+              <span className="edit-listing-owner-photo-current">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={defaults.ownerPhotoUrl}
+                  alt=""
+                  className="edit-listing-owner-photo-thumb"
+                />
+                <span className="edit-listing-owner-photo-caption">
+                  Current photo — upload a file to replace
+                </span>
+              </span>
+            ) : null}
+            <input type="file" name="ownerPhoto" accept="image/*" />
           </label>
         </div>
       </fieldset>

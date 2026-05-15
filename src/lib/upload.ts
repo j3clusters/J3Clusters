@@ -13,6 +13,8 @@ export const MAX_IMAGES = 11;
 export const MAX_BYTES_PER_FILE = 12 * 1024 * 1024;
 const MAX_DIMENSION = 1920;
 const WEBP_QUALITY = 82;
+const OWNER_PORTRAIT_SIZE = 512;
+export const OWNER_PORTRAIT_MAX_BYTES = 4 * 1024 * 1024;
 
 const ALLOWED_MIME = new Set<string>([
   "image/jpeg",
@@ -74,6 +76,46 @@ export async function saveUploadedImage(
       .toBuffer();
 
     const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}.webp`;
+    const fullPath = path.join(UPLOAD_DIR, filename);
+    await fs.writeFile(fullPath, optimized);
+
+    return { ok: true, path: `${PUBLIC_PREFIX}/${filename}` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to process image.";
+    return { ok: false, error: message };
+  }
+}
+
+/** Square portrait for property consultant / agent (cover crop, WebP). */
+export async function saveOwnerPortrait(
+  file: File | null,
+): Promise<SaveImageResult> {
+  if (!file || !isUploadedFile(file)) {
+    return { ok: false, error: "No file provided." };
+  }
+  if (file.size > OWNER_PORTRAIT_MAX_BYTES) {
+    return { ok: false, error: "Photo must be 4 MB or smaller." };
+  }
+  if (!ALLOWED_MIME.has(file.type)) {
+    return { ok: false, error: `Unsupported file type: ${file.type || "unknown"}.` };
+  }
+
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+
+  try {
+    const inputBuffer = Buffer.from(await file.arrayBuffer());
+    const optimized = await sharp(inputBuffer, { failOn: "none" })
+      .rotate()
+      .resize({
+        width: OWNER_PORTRAIT_SIZE,
+        height: OWNER_PORTRAIT_SIZE,
+        fit: "cover",
+        position: "attention",
+      })
+      .webp({ quality: WEBP_QUALITY, effort: 4 })
+      .toBuffer();
+
+    const filename = `owner-${Date.now()}-${crypto.randomBytes(8).toString("hex")}.webp`;
     const fullPath = path.join(UPLOAD_DIR, filename);
     await fs.writeFile(fullPath, optimized);
 

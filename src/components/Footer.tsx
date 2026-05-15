@@ -1,6 +1,13 @@
 import Link from "next/link";
 
+import {
+  buildWhatsAppUrl,
+  SITE_GENERAL_WHATSAPP_MESSAGE,
+  SITE_WHATSAPP,
+} from "@/lib/site-contact";
+
 export function Footer() {
+  const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -39,6 +46,15 @@ export function Footer() {
           </p>
           <p>
             <Link href="/contact">Contact us</Link>
+          </p>
+          <p>
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp ({SITE_WHATSAPP.display})
+            </a>
           </p>
           <p>
             <Link href="/admin/login">Admin login</Link>

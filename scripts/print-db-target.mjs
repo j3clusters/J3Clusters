@@ -2,7 +2,7 @@
  * Prints where Prisma connects (host + DB name only). Use:
  *   npx dotenv-cli -e .env.local -- node scripts/print-db-target.mjs
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/prisma/index.js";
 
 const raw = process.env.DATABASE_URL;
 if (!raw) {

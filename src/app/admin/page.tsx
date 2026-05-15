@@ -574,6 +574,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                             ownerName: submission.ownerName,
                             ownerEmail: submission.ownerEmail,
                             ownerPhone: submission.ownerPhone,
+                            ownerPhotoUrl: submission.ownerPhotoUrl,
                             type: submission.type,
                             purpose: listingPurposeFor(submission),
                             city: submission.city,
@@ -672,6 +673,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                               ownerName: submission.ownerName,
                               ownerEmail: submission.ownerEmail,
                               ownerPhone: submission.ownerPhone,
+                              ownerPhotoUrl: submission.ownerPhotoUrl,
                               type: submission.type,
                               purpose: listingPurposeFor(submission),
                               city: submission.city,
@@ -927,6 +929,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                             ownerName: listing.ownerName,
                             ownerEmail: listing.ownerEmail,
                             ownerPhone: listing.ownerPhone,
+                            ownerPhotoUrl: listing.ownerPhotoUrl,
                             areaSqft: listing.areaSqft,
                             price: listing.price,
                             description: stripListingPurpose(

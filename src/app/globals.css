@@ -70,6 +70,10 @@ a {
   gap: 1rem;
 }
 
+.top-strip-whatsapp {
+  font-weight: 700;
+}
+
 .nav-wrap {
   display: flex;
   justify-content: space-between;
@@ -1674,6 +1678,75 @@ button:focus-visible,
   width: min(680px, 92%);
 }
 
+.contact-whatsapp-intro {
+  margin: -0.25rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.65rem;
+  background: rgba(37, 211, 102, 0.08);
+  border: 1px solid rgba(18, 140, 126, 0.25);
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.contact-whatsapp-link {
+  font-weight: 700;
+  color: #065f46 !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.contact-whatsapp-link:hover {
+  color: #064e3b !important;
+}
+
+.whatsapp-site-float {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.35rem;
+  height: 3.35rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: #fff !important;
+  text-decoration: none;
+  box-shadow:
+    0 4px 18px rgba(18, 140, 126, 0.45),
+    0 2px 6px rgba(15, 23, 42, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsapp-site-float:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 6px 24px rgba(18, 140, 126, 0.55),
+    0 2px 8px rgba(15, 23, 42, 0.15);
+}
+
+.whatsapp-site-float:focus-visible {
+  outline: 3px solid #0ea5e9;
+  outline-offset: 3px;
+}
+
+.whatsapp-site-float-icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-site-float {
+    transition: none;
+  }
+
+  .whatsapp-site-float:hover {
+    transform: none;
+  }
+}
+
 .stacked-form {
   padding: 1rem;
   display: grid;
@@ -2318,7 +2391,7 @@ button:focus-visible,
 }
 
 .property-detail-body {
-  padding: 1.35rem 1.5rem 1.5rem;
+  padding: 1.5rem 1.65rem 1.65rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -2390,6 +2463,101 @@ button:focus-visible,
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.01em;
+}
+
+.property-detail-subsection-title {
+  margin: 1rem 0 0.55rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.55);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #334155;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.property-detail-overview-consultant-block {
+  margin: 0;
+}
+
+.property-detail-consultant-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.85rem 1rem;
+}
+
+.property-detail-consultant-photo-wrap {
+  flex-shrink: 0;
+}
+
+.property-detail-consultant-photo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(5, 150, 105, 0.35);
+  background: #f8fafc;
+}
+
+.property-detail-consultant-photo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(145deg, #059669, #047857);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.property-detail-consultant-facts {
+  flex: 1;
+  min-width: 200px;
+}
+
+.property-detail-facts-gated-hint {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.property-detail-facts-gated-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.property-detail-facts-btn-primary {
+  display: inline-block;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff !important;
+  text-decoration: none;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+}
+
+.property-detail-facts-btn-ghost {
+  display: inline-block;
+  text-align: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0369a1 !important;
+  text-decoration: none;
+  border: 1px solid rgba(3, 105, 161, 0.35);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .property-detail-facts {
@@ -2857,6 +3025,11 @@ button:focus-visible,
   font-size: 0.8rem;
   color: var(--muted);
   margin: -0.35rem 0 0;
+}
+
+.owner-form-optional {
+  font-weight: 600;
+  color: var(--muted);
 }
 
 .owner-my-section {
@@ -3568,6 +3741,17 @@ button:focus-visible,
 }
 
 /* —— Auth cards (owner register / login) —— */
+.portal-auth-suspense-fallback {
+  min-height: 16rem;
+  border-radius: 0.5rem;
+  background: rgba(241, 245, 249, 0.6);
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+}
+
+.portal-auth-header--skeleton {
+  min-height: 6.75rem;
+}
+
 .portal-auth-page {
   min-height: 60vh;
   display: flex;
@@ -4487,6 +4671,16 @@ button:focus-visible,
   color: #475569;
 }
 
+.submission-review-consultant-photo {
+  margin: 0 0 0.65rem;
+}
+
+.submission-review-consultant-photo-img {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #cbd5e1;
+}
+
 .submission-review-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4828,6 +5022,27 @@ button:focus-visible,
   grid-column: 1 / -1;
 }
 
+.edit-listing-owner-photo-current {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.edit-listing-owner-photo-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.edit-listing-owner-photo-caption {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .edit-modal-checkbox {
   display: inline-flex;
   align-items: center;
@@ -5166,4 +5381,23 @@ button:focus-visible,
   .image-upload-grid {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
+}
+
+.consultant-contact-gated .meta {
+  margin: 0 0 0.4rem;
+}
+
+.consultant-contact-gated-actions {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.consultant-contact-gated-actions a {
+  color: #0369a1;
+  text-decoration: none;
+}
+
+.consultant-contact-gated-actions a:hover {
+  text-decoration: underline;
 }

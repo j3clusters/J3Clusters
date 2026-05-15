@@ -24,6 +24,8 @@ export type Listing = {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  /** Consultant / agent photo (path or URL). */
+  ownerPhotoUrl: string;
   isFeatured: boolean;
   postedAt: string;
   updatedAt: string;

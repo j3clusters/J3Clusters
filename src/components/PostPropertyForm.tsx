@@ -166,6 +166,13 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 autoComplete="tel"
               />
             </label>
+            <label className="owner-form-grid-full">
+              Consultant photo <span className="owner-form-optional">(optional)</span>
+              <input name="ownerPhoto" type="file" accept="image/*" />
+              <span className="owner-form-hint">
+                JPG, PNG, or WebP — max 4 MB. Shown on the listing next to your name.
+              </span>
+            </label>
           </div>
         </section>
 

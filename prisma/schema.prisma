@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  /// Avoid Windows EPERM when renaming engines under node_modules\.prisma (AV/editor locks).
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -56,6 +58,8 @@ model Listing {
   ownerName        String          @default("")
   ownerEmail       String          @default("")
   ownerPhone       String          @default("")
+  /// Public path under /uploads or absolute image URL for consultant profile photo.
+  ownerPhotoUrl    String          @default("")
   areaSqft         Int
   price            Int
   image            String
@@ -74,6 +78,7 @@ model PropertySubmission {
   ownerName   String
   ownerEmail  String
   ownerPhone  String
+  ownerPhotoUrl String @default("")
   purpose     ListingPurpose     @default(Sale)
   type        ListingType
   address     String             @db.Text

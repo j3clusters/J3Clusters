@@ -30,6 +30,7 @@ export function prismaListingToApp(row: PrismaListing): AppListing {
     ownerName: row.ownerName,
     ownerEmail: row.ownerEmail,
     ownerPhone: row.ownerPhone,
+    ownerPhotoUrl: row.ownerPhotoUrl,
     isFeatured: row.isFeatured,
     postedAt: (row.approvedAt ?? row.createdAt).toISOString(),
     updatedAt: row.updatedAt.toISOString(),

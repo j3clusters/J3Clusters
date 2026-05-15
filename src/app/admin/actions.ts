@@ -20,7 +20,7 @@ import {
   sendSubmissionApprovedEmail,
   sendSubmissionRejectedEmail,
 } from "@/lib/email/submission-status-email";
-import { isUploadedFile, MAX_IMAGES, saveUploadedImages } from "@/lib/upload";
+import { isUploadedFile, MAX_IMAGES, saveUploadedImages, saveOwnerPortrait } from "@/lib/upload";
 
 type AuditTarget = {
   action: string;
@@ -61,6 +61,7 @@ function listingDataFromSubmission(
     price: number;
     imageUrl: string;
     imageUrls: string[];
+    ownerPhotoUrl: string;
     description: string;
   },
   audit: { approvedAt: Date; approvedByEmail: string },
@@ -83,6 +84,7 @@ function listingDataFromSubmission(
     ownerName: submission.ownerName,
     ownerEmail: submission.ownerEmail,
     ownerPhone: submission.ownerPhone,
+    ownerPhotoUrl: submission.ownerPhotoUrl,
     areaSqft: submission.areaSqft,
     price: submission.price,
     image: submission.imageUrl,
@@ -462,6 +464,15 @@ export async function editSubmissionAction(formData: FormData): Promise<void> {
     }
   }
 
+  let ownerPhotoUrl = existing.ownerPhotoUrl;
+  const ownerPhotoIncoming = formData.get("ownerPhoto");
+  if (ownerPhotoIncoming && isUploadedFile(ownerPhotoIncoming)) {
+    const portrait = await saveOwnerPortrait(ownerPhotoIncoming);
+    if (portrait.ok) {
+      ownerPhotoUrl = portrait.path;
+    }
+  }
+
   if (
     !id ||
     !ownerName ||
@@ -533,6 +544,7 @@ export async function editSubmissionAction(formData: FormData): Promise<void> {
       legalClearance,
       imageUrl,
       imageUrls,
+      ownerPhotoUrl,
       price: Math.round(priceRaw),
       reviewedAt: null,
       reviewedByEmail: null,
@@ -759,6 +771,15 @@ export async function editListingAction(formData: FormData): Promise<void> {
     }
   }
 
+  let ownerPhotoUrl = existing.ownerPhotoUrl;
+  const ownerPhotoIncoming = formData.get("ownerPhoto");
+  if (ownerPhotoIncoming && isUploadedFile(ownerPhotoIncoming)) {
+    const portrait = await saveOwnerPortrait(ownerPhotoIncoming);
+    if (portrait.ok) {
+      ownerPhotoUrl = portrait.path;
+    }
+  }
+
   if (!id || !title || !city || !address || !image || !description) {
     return;
   }
@@ -824,6 +845,7 @@ export async function editListingAction(formData: FormData): Promise<void> {
       ownerName,
       ownerEmail,
       ownerPhone,
+      ownerPhotoUrl,
       image,
       imageUrls,
       description: withListingPurpose(description, purpose),
@@ -853,6 +875,7 @@ export async function editListingAction(formData: FormData): Promise<void> {
   revalidatePath("/listings/rent");
   revalidatePath("/");
   revalidatePath("/my-properties");
+  revalidatePath(`/property/${id}`);
 }
 
 export async function toggleFeaturedListingAction(

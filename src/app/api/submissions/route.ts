@@ -8,6 +8,7 @@ import sharp from "sharp";
 import { USER_SESSION_COOKIE_NAME, verifyUserJwt } from "@/lib/auth/session";
 import { withListingPurpose } from "@/lib/listing-purpose";
 import { prisma } from "@/lib/prisma";
+import { saveOwnerPortrait } from "@/lib/upload";
 import { propertySubmissionSchema } from "@/lib/validators";
 
 const MAX_IMAGES = 10;
@@ -87,6 +88,16 @@ export async function POST(request: Request) {
     imageUrls.push(`/uploads/${fileName}`);
   }
 
+  const ownerPhotoField = formData.get("ownerPhoto");
+  let ownerPhotoUrl = "";
+  if (ownerPhotoField instanceof File && ownerPhotoField.size > 0) {
+    const portrait = await saveOwnerPortrait(ownerPhotoField);
+    if (!portrait.ok) {
+      return NextResponse.json({ error: portrait.error }, { status: 400 });
+    }
+    ownerPhotoUrl = portrait.path;
+  }
+
   const body = {
     ownerName: String(formData.get("ownerName") ?? ""),
     ownerEmail: String(formData.get("ownerEmail") ?? ""),
@@ -145,6 +156,7 @@ export async function POST(request: Request) {
         legalClearance: parsed.data.legalClearance,
         imageUrl: parsed.data.imageUrl,
         imageUrls: parsed.data.imageUrls,
+        ownerPhotoUrl,
         price: parsed.data.price,
         description: descriptionWithPurpose,
       },
