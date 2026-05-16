@@ -25,8 +25,8 @@ import {
   loadPublishedAppListingsOrdered,
   pickHomeFeaturedListings,
 } from "@/lib/listing-catalog";
-
-export const revalidate = 60;
+/** Keep in sync with LISTINGS_PAGE_REVALIDATE_SECONDS in @/lib/listing-cache */
+export const revalidate = 300;
 
 export default async function HomePage() {
   const ordered = await loadPublishedAppListingsOrdered();
@@ -70,13 +70,6 @@ export default async function HomePage() {
           </div>
 
           <div className="hero-search-block">
-          <div className="search-tabs">
-            <Link href="/listings/buy" className="search-tab-active">
-              Buy
-            </Link>
-            <Link href="/listings/rent">Rent</Link>
-            <Link href="/register/consultant">Sell</Link>
-          </div>
           <form className="search-card portal-search" action="/listings">
             <div className="field-grid">
               <label>

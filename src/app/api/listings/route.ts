@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-export const revalidate = 60;
+import { LISTINGS_PAGE_REVALIDATE_SECONDS } from "@/lib/listing-cache";
+
+/** Keep in sync with LISTINGS_PAGE_REVALIDATE_SECONDS in @/lib/listing-cache */
+export const revalidate = 300;
 
 import {
   canViewListingContactDetails,
@@ -26,7 +29,7 @@ export async function GET(request: Request) {
     { items },
     {
       headers: {
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "Cache-Control": `public, s-maxage=${LISTINGS_PAGE_REVALIDATE_SECONDS}, stale-while-revalidate=${LISTINGS_PAGE_REVALIDATE_SECONDS * 2}`,
       },
     },
   );

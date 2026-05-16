@@ -1,5 +1,6 @@
 import { ListingStatus } from "@prisma/client";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 import { listings as bundledListings } from "@/data/listings";
 import { prismaListingToApp } from "@/lib/listing-map";
@@ -93,20 +94,13 @@ export async function loadPublishedAppListingsOrdered(): Promise<Listing[]> {
   }
 }
 
-export async function loadPublishedListingById(id: string): Promise<Listing | null> {
-  try {
-    const row = await prisma.listing.findFirst({
-      where: { id, status: ListingStatus.PUBLISHED },
-    });
-    if (row) return prismaListingToApp(row);
-  } catch (err) {
-    console.warn(
-      "[listing-catalog] Listing lookup failed; checking bundled catalog.",
-      err,
-    );
-  }
-  return bundledListings.find((listing) => listing.id === id) ?? null;
-}
+/** Resolve a listing from the cached catalog (avoids per-id database round-trips). */
+export const loadPublishedListingById = cache(
+  async (id: string): Promise<Listing | null> => {
+    const catalog = await loadPublishedAppListingsOrdered();
+    return catalog.find((listing) => listing.id === id) ?? null;
+  },
+);
 
 export function filterListingsByPurposeRouteMode(
   items: Listing[],

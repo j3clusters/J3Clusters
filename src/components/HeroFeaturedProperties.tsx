@@ -9,7 +9,13 @@ type HeroFeaturedPropertiesProps = {
   items: Listing[];
 };
 
-function FeaturedPropertyRow({ item }: { item: Listing }) {
+function FeaturedPropertyRow({
+  item,
+  priority = false,
+}: {
+  item: Listing;
+  priority?: boolean;
+}) {
   return (
     <Link
       href={`/property/${item.id}`}
@@ -23,7 +29,8 @@ function FeaturedPropertyRow({ item }: { item: Listing }) {
           width={88}
           height={66}
           className="hero-featured-thumb"
-          loading="lazy"
+          priority={priority}
+          loading={priority ? undefined : "lazy"}
         />
       </span>
       <span className="hero-featured-body">
@@ -81,7 +88,7 @@ export function HeroFeaturedProperties({ items }: HeroFeaturedPropertiesProps) {
         >
           {loopItems.map((item, index) => (
             <li key={`${item.id}-${index}`}>
-              <FeaturedPropertyRow item={item} />
+              <FeaturedPropertyRow item={item} priority={index === 0} />
             </li>
           ))}
         </ul>

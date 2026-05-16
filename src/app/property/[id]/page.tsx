@@ -20,6 +20,9 @@ import {
   buildPropertyMetadata,
 } from "@/lib/seo";
 
+/** Keep in sync with LISTINGS_PAGE_REVALIDATE_SECONDS in @/lib/listing-cache */
+export const revalidate = 300;
+
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
 };
@@ -49,13 +52,14 @@ export default async function PropertyDetailPage({
 }: PropertyDetailPageProps) {
   const { id } = await params;
 
-  const rawListing = await loadPublishedListingById(id);
+  const [rawListing, canViewContact] = await Promise.all([
+    loadPublishedListingById(id),
+    canViewListingContactDetails(),
+  ]);
 
   if (!rawListing) {
     notFound();
   }
-
-  const canViewContact = await canViewListingContactDetails();
   const item = redactListingContact(rawListing, canViewContact);
   const gallery = item.imageUrls.length ? item.imageUrls : [item.image];
   const isRent = item.purpose === "Rent" || item.type === "PG";

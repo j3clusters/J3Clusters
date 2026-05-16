@@ -1,29 +1,17 @@
-import { cookies } from "next/headers";
+import { Suspense } from "react";
 import Link from "next/link";
 
-import { USER_SESSION_COOKIE_NAME } from "@/lib/auth/jwt-cookies";
-import { verifyUserJwt } from "@/lib/auth/verify-session-token";
-import { UserLogoutButton } from "@/components/UserLogoutButton";
+import {
+  HeaderMainSessionNav,
+  HeaderMainSessionNavFallback,
+  HeaderTopSessionLinks,
+} from "@/components/HeaderSessionNav";
 import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,
 } from "@/lib/site-contact";
-import { effectiveAccountRole } from "@/lib/user-session-role";
 
-export async function Header() {
-  const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
-  let session: Awaited<ReturnType<typeof verifyUserJwt>> | null = null;
-  try {
-    session = await verifyUserJwt(token);
-  } catch (err) {
-    console.error(
-      "[Header] User session check failed — set ADMIN_JWT_SECRET and USER_JWT_SECRET (32+ chars each) on the host:",
-      err,
-    );
-  }
-
-  const role = effectiveAccountRole(session);
-
+export function Header() {
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
 
   return (
@@ -35,15 +23,9 @@ export async function Header() {
             selling
           </span>
           <span className="top-strip-links">
-            {!session ? (
-              <>
-                <Link href="/register">Register</Link>
-                <span className="top-strip-sep" aria-hidden="true">
-                  |
-                </span>
-                <Link href="/community/member">Members</Link>
-              </>
-            ) : null}
+            <Suspense fallback={null}>
+              <HeaderTopSessionLinks />
+            </Suspense>
             <a
               href={whatsappHref}
               className="top-strip-whatsapp"
@@ -78,57 +60,9 @@ export async function Header() {
             <li>
               <Link href="/listings/rent">Rent</Link>
             </li>
-            <li>
-              <Link
-                href={
-                  role === "CONSULTANT"
-                    ? "/post-property"
-                    : "/register/consultant"
-                }
-              >
-                Sell
-              </Link>
-            </li>
-            {role === "CONSULTANT" ? (
-              <>
-                <li>
-                  <Link href="/post-property" className="primary-nav-cta">
-                    Post property
-                  </Link>
-                </li>
-                <li>
-                  <UserLogoutButton className="header-logout-btn" />
-                </li>
-              </>
-            ) : role === "MEMBER" ? (
-              <>
-                <li>
-                  <Link href="/community/member">Member hub</Link>
-                </li>
-                <li>
-                  <UserLogoutButton className="header-logout-btn" />
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <Link href="/register">Join</Link>
-                </li>
-                <li>
-                  <Link href="/login" className="muted-link">
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={`/login?next=${encodeURIComponent("/post-property")}`}
-                    className="primary-nav-cta"
-                  >
-                    Post property
-                  </Link>
-                </li>
-              </>
-            )}
+            <Suspense fallback={<HeaderMainSessionNavFallback />}>
+              <HeaderMainSessionNav />
+            </Suspense>
           </ul>
         </nav>
       </div>

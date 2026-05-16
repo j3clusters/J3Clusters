@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-
 import { ListingsView } from "./ListingsView";
 import { loadPublishedAppListingsOrdered } from "@/lib/listing-catalog";
 export type ListingsSearchParams = {
@@ -11,7 +9,8 @@ export type ListingsSearchParams = {
   sort?: string;
 };
 
-export const revalidate = 60;
+/** Keep in sync with LISTINGS_PAGE_REVALIDATE_SECONDS in @/lib/listing-cache */
+export const revalidate = 300;
 
 function budgetMaxFromParam(budget: string | undefined) {
   return budget?.includes("-") ? (budget.split("-")[1] ?? "") : "";
@@ -34,24 +33,15 @@ export async function ListingsShell({
   const catalogItems = await loadPublishedAppListingsOrdered();
 
   return (
-    <Suspense
-      fallback={
-        <main className="container section">
-          <h1>Property listings</h1>
-          <p>Loading…</p>
-        </main>
-      }
-    >
-      <ListingsView
-        purposeRoute={purposeRoute}
-        catalogItems={catalogItems}
-        initialMode={initialMode}
-        initialType={searchParams.type ?? ""}
-        initialCity={searchParams.city ?? ""}
-        initialMinBudget={searchParams.min ?? ""}
-        initialBudgetMax={budgetMaxFromParam(searchParams.budget)}
-        initialSort={searchParams.sort ?? "newest"}
-      />
-    </Suspense>
+    <ListingsView
+      purposeRoute={purposeRoute}
+      catalogItems={catalogItems}
+      initialMode={initialMode}
+      initialType={searchParams.type ?? ""}
+      initialCity={searchParams.city ?? ""}
+      initialMinBudget={searchParams.min ?? ""}
+      initialBudgetMax={budgetMaxFromParam(searchParams.budget)}
+      initialSort={searchParams.sort ?? "newest"}
+    />
   );
 }
