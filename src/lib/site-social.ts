@@ -10,7 +10,7 @@ import {
 } from "@/lib/site-contact";
 
 const DEFAULT_PUBLIC_EMAIL = "j3clusters@gmail.com";
-const DEFAULT_INSTAGRAM_URL = "https://www.instagram.com/j3clusters2026/";
+const DEFAULT_INSTAGRAM_URL = "https://www.instagram.com/j3_clusters/";
 const DEFAULT_FACEBOOK_URL =
   "https://www.facebook.com/profile.php?id=100092451301908";
 const DEFAULT_YOUTUBE_URL =
