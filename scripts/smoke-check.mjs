@@ -167,7 +167,7 @@ const main = async () => {
     ["/register", "GET /register"],
     ["/register/consultant", "GET /register/consultant"],
     ["/register/member", "GET /register/member"],
-    ["/community/consultant", "GET /community/consultant"],
+    ["/community/consultant", "GET /community/consultant (redirects to register)"],
     ["/community/member", "GET /community/member"],
     ["/contact", "GET /contact"],
     ["/about", "GET /about"],

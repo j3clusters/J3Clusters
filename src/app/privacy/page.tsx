@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteArticlePage } from "@/components/SiteArticlePage";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Privacy Policy",
   description:
     "How J3 Clusters collects, uses, retains, and protects personal information across our property marketplace.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

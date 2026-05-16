@@ -30,7 +30,7 @@ export default function MemberCommunityPage() {
 
         <p className="community-page-crosslink">
           Ready to list properties?{" "}
-          <Link href="/community/consultant">Consultant community</Link> has the full workflow.
+          <Link href="/register/consultant">Register as a property consultant</Link>.
         </p>
       </div>
     </main>

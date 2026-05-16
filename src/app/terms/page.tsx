@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteArticlePage } from "@/components/SiteArticlePage";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Terms & Conditions",
   description:
     "General terms governing use of the J3 Clusters property marketplace, including accounts, listings, acceptable use, and disclaimers.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

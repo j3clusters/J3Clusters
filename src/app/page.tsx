@@ -1,6 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HeroFeaturedProperties } from "@/components/HeroFeaturedProperties";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Buy & rent verified properties in India",
+  description:
+    "Search apartments, villas, plots, and PG stays for sale and rent. Verified consultant listings, transparent pricing, and direct support on J3 Clusters.",
+  path: "/",
+  keywords: [
+    "property marketplace India",
+    "buy property online",
+    "rent property India",
+    "verified real estate listings",
+  ],
+});
 import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,

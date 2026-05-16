@@ -10,7 +10,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin/", "/api/"],
+      disallow: [
+        "/admin/",
+        "/api/",
+        "/post-property",
+        "/my-properties",
+        "/login",
+        "/forgot-password",
+        "/reset-password",
+      ],
     },
     sitemap: `${base}/sitemap.xml`,
   };

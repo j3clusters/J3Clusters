@@ -1,14 +1,64 @@
 import type { ReactNode } from "react";
-import type { Metadata } from "next";
 import Link from "next/link";
 
+import { JsonLd } from "@/components/JsonLd";
 import { SiteArticlePage } from "@/components/SiteArticlePage";
+import { buildFaqPageJsonLd, buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "FAQ",
   description:
     "Frequently asked questions about browsing properties, memberships, consultants, submissions, privacy, and support on J3 Clusters.",
-};
+  path: "/faq",
+});
+
+const faqStructuredData = [
+  {
+    question: "What is J3 Clusters?",
+    answer:
+      "J3 Clusters is a property marketplace where you can explore verified sale and rental listings published by consultants, with membership features that simplify reaching consultants when you are ready.",
+  },
+  {
+    question: "What is the difference between a consultant and a community member?",
+    answer:
+      "Consultants submit and manage listings after admin review. Community members browse the marketplace and unlock consultant phone numbers on listings when signed in.",
+  },
+  {
+    question: "How do I register?",
+    answer:
+      "Use consultant registration to list properties after approval, or member registration to buy or rent. Visit the registration hub to choose your path.",
+  },
+  {
+    question: "Why does a listing show without a phone number until I sign in?",
+    answer:
+      "Mobile numbers are revealed to signed-in community members to balance discovery with consultant privacy and reduce automated scraping.",
+  },
+  {
+    question: "How long does consultant listing approval take?",
+    answer:
+      "Timing depends on review backlog and submission completeness. Incomplete photos or conflicting details typically delay approval.",
+  },
+  {
+    question: "Can I advertise any property?",
+    answer:
+      "Listings must comply with Indian law and be truthful to the best of your knowledge. See our Terms for full responsibilities.",
+  },
+  {
+    question: "How do password recovery and emails work?",
+    answer:
+      "Account holders can request a password reset link when email is configured. In development, links may be logged for testing only.",
+  },
+  {
+    question: "Who can see my profile data?",
+    answer:
+      "See our Privacy Policy for data categories, retention, cookies, and your choices. Account data powers authentication, listings, and support.",
+  },
+  {
+    question: "How do I report a problem?",
+    answer:
+      "Contact us with the listing URL or account issue. Fraud reports with evidence help us escalate faster.",
+  },
+];
 
 const faqs: { question: string; answer: ReactNode }[] = [
   {
@@ -78,6 +128,8 @@ const faqs: { question: string; answer: ReactNode }[] = [
 
 export default function FaqPage() {
   return (
+    <>
+      <JsonLd data={buildFaqPageJsonLd(faqStructuredData)} />
     <SiteArticlePage
       title="Frequently asked questions"
       eyebrow="Help centre"
@@ -101,5 +153,6 @@ export default function FaqPage() {
         the <Link href="/terms">Terms &amp; Conditions</Link>.
       </p>
     </SiteArticlePage>
+    </>
   );
 }

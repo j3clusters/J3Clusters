@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { MemberSocialAuth } from "@/components/MemberSocialAuth";
 import {
   consultantRedirectAfterLogin,
   memberRedirectAfterLogin,
@@ -15,6 +16,7 @@ export function LoginPageClient() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const pendingConsultant = searchParams.get("pending") === "consultant";
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,11 +78,20 @@ export function LoginPageClient() {
           <span className="portal-auth-badge">Community access</span>
           <h1>Welcome back</h1>
           <p className="portal-auth-sub">
-            Sign in as a {CONSULTANT.role.toLowerCase()} to post properties, or as a{" "}
-            {COMMUNITY_MEMBER.role.toLowerCase()} to unlock consultant phone numbers on
-            listings.
+            {COMMUNITY_MEMBER.role}s can sign in with email, Google, or Facebook.{" "}
+            {CONSULTANT.role}s use email after admin approval.
           </p>
         </div>
+        {pendingConsultant ? (
+          <p className="owner-form-message portal-auth-inline-msg" data-tone="ok" role="status">
+            Your consultant application is awaiting admin approval. Sign in here once
+            approved.
+          </p>
+        ) : null}
+        <MemberSocialAuth mode="login" />
+        <p className="portal-auth-divider">
+          <span>Or sign in with email</span>
+        </p>
         <form className="stacked-form" onSubmit={onSubmit}>
           <label>
             Email

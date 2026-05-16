@@ -99,22 +99,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.42,
     },
     {
-      url: `${base}/community/consultant`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.35,
-    },
-    {
       url: `${base}/community/member`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.35,
-    },
-    {
-      url: `${base}/login`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.3,
     },
   ];
 

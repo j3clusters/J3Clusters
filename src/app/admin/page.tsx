@@ -1,5 +1,10 @@
 ﻿import Link from "next/link";
-import { ListingStatus, SubmissionStatus } from "@prisma/client";
+import {
+  AppUserAccountStatus,
+  AppUserRole,
+  ListingStatus,
+  SubmissionStatus,
+} from "@prisma/client";
 
 import { AdminLogoutButton } from "@/components/AdminLogoutButton";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
@@ -25,6 +30,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-admin";
 
 import {
+  approveConsultantAction,
   approveSubmissionAction,
   bulkSubmissionAction,
   deleteContactLeadAction,
@@ -36,6 +42,7 @@ import {
   permanentlyDeleteContactLeadAction,
   permanentlyDeleteListingAction,
   permanentlyDeleteSubmissionAction,
+  rejectConsultantAction,
   rejectSubmissionAction,
   restoreContactLeadAction,
   restoreListingAction,
@@ -187,6 +194,7 @@ export default async function AdminDashboardPage(props: PageProps) {
     recycledSubmissions,
     recycledLeads,
     auditLogs,
+    pendingConsultants,
   ] = await Promise.all([
     prisma.propertySubmission.findMany({
       where: submissionWhere,
@@ -237,6 +245,14 @@ export default async function AdminDashboardPage(props: PageProps) {
       where: { deletedAt: { not: null } },
     }),
     prisma.adminAuditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.appUser.findMany({
+      where: {
+        role: AppUserRole.CONSULTANT,
+        accountStatus: AppUserAccountStatus.PENDING,
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
@@ -341,6 +357,12 @@ export default async function AdminDashboardPage(props: PageProps) {
       </header>
         <div className="container admin-quick-nav-wrap">
           <nav className="admin-quick-nav" aria-label="Jump to section">
+            <a href="#consultants">
+              Consultants
+              {pendingConsultants.length > 0
+                ? ` (${pendingConsultants.length})`
+                : ""}
+            </a>
             <a href="#submissions">Submissions</a>
             <a href="#listings">Listings</a>
             <a href="#recycle">Recycle bin</a>
@@ -385,6 +407,62 @@ export default async function AdminDashboardPage(props: PageProps) {
             </div>
           </div>
         </div>
+
+      <section id="consultants" className="admin-panel admin-panel-consultants">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Property consultant registrations</h2>
+          <span className="admin-panel-chip">
+            {pendingConsultants.length} awaiting approval
+          </span>
+        </div>
+        <p className="admin-panel-desc">
+          New property consultant (owner) accounts stay <strong>PENDING</strong> until
+          you approve them. Approved consultants can sign in and post listings.
+        </p>
+        {pendingConsultants.length === 0 ? (
+          <p className="admin-empty-hint">No consultant registrations waiting for approval.</p>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>City</th>
+                  <th>Registered</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingConsultants.map((consultant) => (
+                  <tr key={consultant.id}>
+                    <td>{consultant.name}</td>
+                    <td>{consultant.email}</td>
+                    <td>{consultant.phone}</td>
+                    <td>{consultant.city}</td>
+                    <td>{formatUtc(consultant.createdAt)}</td>
+                    <td>
+                      <div className="admin-action-stack">
+                        <form action={approveConsultantAction.bind(null, consultant.id)}>
+                          <button type="submit" className="secondary-btn">
+                            Approve
+                          </button>
+                        </form>
+                        <form action={rejectConsultantAction.bind(null, consultant.id)}>
+                          <button type="submit" className="secondary-btn danger-btn">
+                            Reject
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <section id="submissions" className="admin-panel admin-panel-submissions">
         <div className="admin-panel-head">

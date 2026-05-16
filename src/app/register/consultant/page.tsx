@@ -2,6 +2,13 @@ import Link from "next/link";
 
 import { RegisterForm } from "@/components/RegisterForm";
 import { CONSULTANT } from "@/lib/consultant-labels";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Register as property consultant",
+  description: CONSULTANT.registerSub,
+  path: "/register/consultant",
+});
 
 export default function RegisterConsultantPage() {
   return (

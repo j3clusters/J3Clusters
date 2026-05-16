@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { accountStatusForNewUser } from "@/lib/app-user-account";
 import {
   USER_SESSION_COOKIE_NAME,
   signUserJwt,
@@ -27,6 +28,8 @@ export async function POST(request: Request) {
 
   const { name, email, phone, city, password, accountRole } = parsed.data;
   const normalizedEmail = email.trim().toLowerCase();
+  const accountStatus = accountStatusForNewUser(accountRole);
+  const requiresApproval = accountRole === "CONSULTANT";
 
   let user: { id: string; email: string; role: "CONSULTANT" | "MEMBER" };
   try {
@@ -50,6 +53,8 @@ export async function POST(request: Request) {
         city,
         passwordHash,
         role: accountRole,
+        accountStatus,
+        authProvider: "email",
       },
       select: { id: true, email: true, role: true },
     });
@@ -70,6 +75,14 @@ export async function POST(request: Request) {
     );
   }
 
+  if (requiresApproval) {
+    return NextResponse.json({
+      ok: true,
+      pendingApproval: true,
+      accountRole: user.role,
+    });
+  }
+
   let token: string;
   try {
     token = await signUserJwt({
@@ -88,7 +101,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true, accountRole: user.role });
   response.cookies.set(USER_SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",

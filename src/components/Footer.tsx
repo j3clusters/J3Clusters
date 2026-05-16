@@ -95,9 +95,6 @@ export function Footer() {
                 <Link href="/register/member">Join as member</Link>
               </li>
               <li>
-                <Link href="/community/consultant">Consultant community</Link>
-              </li>
-              <li>
                 <Link href="/login">Sign in</Link>
               </li>
               <li>

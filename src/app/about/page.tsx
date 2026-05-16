@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteArticlePage } from "@/components/SiteArticlePage";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "About Us",
+export const metadata = buildPageMetadata({
+  title: "About us",
   description:
     "Learn how J3 Clusters connects buyers and renters with property consultants through verified listings and transparent workflows.",
-};
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

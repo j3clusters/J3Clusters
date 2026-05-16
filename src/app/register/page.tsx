@@ -1,10 +1,14 @@
 import Link from "next/link";
 
-import {
-  COMMUNITY_MEMBER,
-  CONSULTANT,
-  CONSULTANT_COMMUNITY,
-} from "@/lib/consultant-labels";
+import { COMMUNITY_MEMBER, CONSULTANT } from "@/lib/consultant-labels";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Create an account",
+  description:
+    "Register as a property consultant to list homes after admin approval, or join as a community member to browse and unlock consultant contacts.",
+  path: "/register",
+});
 
 export default function RegisterHubPage() {
   return (
@@ -28,7 +32,6 @@ export default function RegisterHubPage() {
               <Link href="/register/consultant" className="primary-nav-cta">
                 Register as consultant
               </Link>
-              <Link href="/community/consultant">About the consultant community</Link>
             </div>
           </section>
 
@@ -47,10 +50,6 @@ export default function RegisterHubPage() {
 
         <p className="register-hub-foot">
           Already have an account? <Link href="/login">Sign in</Link>
-          <span className="register-hub-foot-sep" aria-hidden="true">
-            ·
-          </span>
-          <Link href="/community/consultant">{CONSULTANT_COMMUNITY.title}</Link>
         </p>
       </div>
     </main>

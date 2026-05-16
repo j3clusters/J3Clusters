@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     const user = await prisma.appUser.findUnique({
       where: { email },
-      select: { id: true, email: true },
+      select: { id: true, email: true, passwordHash: true },
     });
 
     const emailConfigured = isPasswordEmailConfigured();
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
         "Email is not configured (add RESEND_API_KEY and RESEND_FROM_EMAIL to .env.local). For a registered account, the reset link is also printed in the terminal where the dev server runs.";
     }
 
-    if (user) {
+    if (user?.passwordHash) {
       await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
 
       const rawToken = randomBytes(32).toString("base64url");

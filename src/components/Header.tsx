@@ -112,9 +112,6 @@ export async function Header() {
             ) : (
               <>
                 <li>
-                  <Link href="/community/consultant">Consultants</Link>
-                </li>
-                <li>
                   <Link href="/register">Join</Link>
                 </li>
                 <li>

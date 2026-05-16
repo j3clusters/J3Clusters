@@ -43,6 +43,12 @@ enum AppUserRole {
   MEMBER
 }
 
+enum AppUserAccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Listing {
   id               String          @id @default(cuid())
   /// When published from an owner submission, links back for owner dashboard.
@@ -133,18 +139,27 @@ model AdminUser {
 }
 
 model AppUser {
-  id           String      @id @default(cuid())
-  name         String
-  email        String      @unique
-  phone        String
-  city         String
-  role         AppUserRole @default(CONSULTANT)
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String               @id @default(cuid())
+  name          String
+  email         String               @unique
+  phone         String
+  city          String
+  role          AppUserRole          @default(CONSULTANT)
+  accountStatus AppUserAccountStatus @default(APPROVED)
+  /// google | facebook | email
+  authProvider  String?
+  googleId      String?              @unique
+  facebookId    String?              @unique
+  passwordHash  String?
+  approvedAt    DateTime?
+  approvedByEmail String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
 
   passwordResetTokens PasswordResetToken[]
   propertySubmissions PropertySubmission[]
+
+  @@index([accountStatus, role])
 }
 
 model PasswordResetToken {

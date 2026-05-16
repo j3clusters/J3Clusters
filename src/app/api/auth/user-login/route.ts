@@ -2,6 +2,10 @@ import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 
 import {
+  canSignInWithPassword,
+  loginBlockedMessage,
+} from "@/lib/app-user-account";
+import {
   signUserJwt,
   USER_SESSION_COOKIE_NAME,
 } from "@/lib/auth/session";
@@ -29,15 +33,39 @@ export async function POST(request: Request) {
         email: true,
         passwordHash: true,
         role: true,
+        accountStatus: true,
+        authProvider: true,
       },
     });
-    const passwordOk =
-      user && (await bcrypt.compare(password, user.passwordHash));
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid email or password." },
+        { status: 401 },
+      );
+    }
+
+    if (!canSignInWithPassword(user)) {
+      return NextResponse.json(
+        {
+          error:
+            "This account uses social sign-in. Continue with Google or Facebook on the member login page.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const passwordOk = await bcrypt.compare(password, user.passwordHash!);
     if (!passwordOk) {
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 },
       );
+    }
+
+    const blocked = loginBlockedMessage(user.accountStatus);
+    if (blocked) {
+      return NextResponse.json({ error: blocked }, { status: 403 });
     }
 
     let token: string;

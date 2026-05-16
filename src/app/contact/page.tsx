@@ -1,4 +1,15 @@
+import type { Metadata } from "next";
+
 import { ContactForm } from "@/components/ContactForm";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = buildPageMetadata({
+  title: "Contact us",
+  description:
+    "Get in touch with J3 Clusters for property enquiries, consultant support, and listing questions. WhatsApp and contact form available.",
+  path: "/contact",
+  keywords: ["contact J3 Clusters", "property enquiry", "real estate support"],
+});
 import { SocialLinks } from "@/components/SocialLinks";
 import {
   buildWhatsAppUrl,

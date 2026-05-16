@@ -1,9 +1,13 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { buildListingsMetadata } from "@/lib/seo";
 import {
   ListingsShell,
   type ListingsSearchParams,
 } from "./listings-shell";
+
+export const metadata: Metadata = buildListingsMetadata({ purpose: "all" });
 
 type PageProps = {
   searchParams: Promise<ListingsSearchParams>;

@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ListingPurpose } from "@prisma/client";
 
+import { JsonLd } from "@/components/JsonLd";
 import { PropertyCard } from "@/components/PropertyCard";
 import { PropertyDetailFacts } from "@/components/PropertyDetailFacts";
 import { PropertyDetailMediaColumn } from "@/components/PropertyDetailMediaColumn";
@@ -12,10 +14,26 @@ import {
 } from "@/lib/listing-contact-access";
 import { loadPublishedListingById } from "@/lib/listing-catalog";
 import { fetchSimilarListings } from "@/lib/similar-listings";
+import {
+  buildBreadcrumbJsonLd,
+  buildListingJsonLd,
+  buildPropertyMetadata,
+} from "@/lib/seo";
 
 type PropertyDetailPageProps = {
   params: Promise<{ id: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: PropertyDetailPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await loadPublishedListingById(id);
+  if (!listing) {
+    return { title: "Property not found" };
+  }
+  return buildPropertyMetadata(listing);
+}
 
 function estimateEmi(price: number) {
   return Math.round((price * 0.0085) / 1000) * 1000;
@@ -53,10 +71,23 @@ export default async function PropertyDetailPage({
   const similar = similarRaw.map((listing) =>
     redactListingContact(listing, canViewContact),
   );
-  const listingsCityHref = `/listings?city=${encodeURIComponent(item.city)}&mode=${isRent ? "rent" : "buy"}`;
+  const listingsCityHref = isRent
+    ? `/listings/rent?city=${encodeURIComponent(item.city)}`
+    : `/listings/buy?city=${encodeURIComponent(item.city)}`;
+
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    {
+      name: isRent ? "Rent" : "Buy",
+      path: isRent ? "/listings/rent" : "/listings/buy",
+    },
+    { name: item.city, path: listingsCityHref },
+    { name: item.title, path: `/property/${id}` },
+  ]);
 
   return (
     <main className="container section property-detail-page">
+      <JsonLd data={[buildListingJsonLd(rawListing), breadcrumbJsonLd]} />
       <article className="property-detail-card">
         <PropertyDetailMediaColumn item={item} images={gallery} />
         <div className="property-detail-body">

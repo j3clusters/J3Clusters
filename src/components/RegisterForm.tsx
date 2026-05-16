@@ -46,9 +46,18 @@ export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps
       }
 
       form.reset();
+
+      if (payload.pendingApproval) {
+        setMessage(
+          "Registration received. Our team will review your property consultant application. You can sign in after admin approval.",
+        );
+        setPending(false);
+        return;
+      }
+
       const okDetail =
         accountRole === "CONSULTANT"
-          ? "You can now post properties as a property consultant. Your contact details will prefill on the listing form."
+          ? "You can now post properties as a property consultant."
           : "You can browse listings and reveal consultant mobile numbers anytime you’re signed in.";
       setMessage(`Registration successful. ${okDetail}`);
       setTimeout(() => router.push(successRedirect), 700);
@@ -93,7 +102,11 @@ export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps
       {message ? (
         <p
           className="owner-form-message portal-auth-inline-msg"
-          data-tone={message.includes("successful") ? "ok" : "err"}
+          data-tone={
+            message.includes("successful") || message.includes("received")
+              ? "ok"
+              : "err"
+          }
           aria-live="polite"
         >
           {message}

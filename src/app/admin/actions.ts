@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  AppUserAccountStatus,
   FurnishingType,
   ListingStatus,
   ListingPurpose,
@@ -1041,4 +1042,81 @@ export async function permanentlyDeleteListingAction(
   revalidatePath("/listings/rent");
   revalidatePath("/");
   revalidatePath("/my-properties");
+}
+
+export async function approveConsultantAction(
+  userId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const user = await prisma.appUser.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, accountStatus: true, email: true, name: true },
+  });
+  if (!user || user.role !== "CONSULTANT") {
+    return;
+  }
+  if (user.accountStatus === AppUserAccountStatus.APPROVED) {
+    return;
+  }
+
+  const approvedAt = new Date();
+  await prisma.appUser.update({
+    where: { id: userId },
+    data: {
+      accountStatus: AppUserAccountStatus.APPROVED,
+      approvedAt,
+      approvedByEmail: admin.email,
+    },
+  });
+
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "APPROVE_CONSULTANT",
+      targetType: "AppUser",
+      targetId: userId,
+      message: `${user.name} <${user.email}>`,
+    }),
+  });
+
+  revalidatePath("/admin");
+}
+
+export async function rejectConsultantAction(
+  userId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const user = await prisma.appUser.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, accountStatus: true, email: true, name: true },
+  });
+  if (!user || user.role !== "CONSULTANT") {
+    return;
+  }
+  if (user.accountStatus === AppUserAccountStatus.REJECTED) {
+    return;
+  }
+
+  await prisma.appUser.update({
+    where: { id: userId },
+    data: {
+      accountStatus: AppUserAccountStatus.REJECTED,
+      approvedAt: null,
+      approvedByEmail: admin.email,
+    },
+  });
+
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "REJECT_CONSULTANT",
+      targetType: "AppUser",
+      targetId: userId,
+      message: `${user.name} <${user.email}>`,
+    }),
+  });
+
+  revalidatePath("/admin");
 }
