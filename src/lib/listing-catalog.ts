@@ -1,8 +1,14 @@
 import { ListingStatus } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 
 import { listings as bundledListings } from "@/data/listings";
 import { prismaListingToApp } from "@/lib/listing-map";
 import { listingPurposeFor } from "@/lib/listing-purpose";
+import { LISTINGS_PAGE_REVALIDATE_SECONDS } from "@/lib/listing-cache";
+import {
+  shouldSkipListingsDb,
+  withListingsDbTimeout,
+} from "@/lib/listing-db-timeout";
 import { prisma } from "@/lib/prisma";
 import type { Listing } from "@/types/listing";
 
@@ -13,23 +19,78 @@ export function sortListingsLikeDb(items: Listing[]): Listing[] {
   });
 }
 
-/** Published rows from Postgres, or the bundled StepsStone catalog when the DB has none or errors. */
-export async function loadPublishedAppListingsOrdered(): Promise<Listing[]> {
+/** Prefer admin-featured listings, then fill with latest published up to `limit`. */
+export function pickHomeFeaturedListings(
+  items: Listing[],
+  limit = 6,
+): Listing[] {
+  const flagged = items.filter((item) => item.isFeatured);
+  if (flagged.length >= limit) {
+    return flagged.slice(0, limit);
+  }
+  if (flagged.length > 0) {
+    const rest = items.filter((item) => !item.isFeatured);
+    return [...flagged, ...rest].slice(0, limit);
+  }
+  return items.slice(0, limit);
+}
+
+const bundledCatalog = sortListingsLikeDb([...bundledListings]);
+
+function mergePublishedWithBundled(dbListings: Listing[]): Listing[] {
+  if (dbListings.length === 0) {
+    return bundledCatalog;
+  }
+  const dbIds = new Set(dbListings.map((item) => item.id));
+  const extras = bundledCatalog.filter((item) => !dbIds.has(item.id));
+  return sortListingsLikeDb([...dbListings, ...extras]);
+}
+
+async function loadPublishedAppListingsOrderedUncached(): Promise<Listing[]> {
+  if (shouldSkipListingsDb()) {
+    return bundledCatalog;
+  }
+
   try {
-    const rows = await prisma.listing.findMany({
-      where: { status: ListingStatus.PUBLISHED },
-      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-    });
-    if (rows.length > 0) {
-      return rows.map(prismaListingToApp);
+    const rows = await withListingsDbTimeout(
+      prisma.listing.findMany({
+        where: { status: ListingStatus.PUBLISHED },
+        orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+      }),
+    );
+    const published = rows.map(prismaListingToApp);
+    if (published.length === 0) {
+      console.warn(
+        "[listing-catalog] No PUBLISHED rows in database; serving bundled catalog.",
+      );
     }
+    return mergePublishedWithBundled(published);
   } catch (err) {
     console.warn(
-      "[listing-catalog] Published listings query failed; using bundled catalog.",
+      "[listing-catalog] Published listings query failed; serving bundled catalog only.",
       err,
     );
+    return bundledCatalog;
   }
-  return sortListingsLikeDb([...bundledListings]);
+}
+
+const loadPublishedCached = unstable_cache(
+  loadPublishedAppListingsOrderedUncached,
+  ["published-app-listings"],
+  { revalidate: LISTINGS_PAGE_REVALIDATE_SECONDS },
+);
+
+/** Published rows from Postgres, merged with bundled catalog when the DB is empty or unavailable. */
+export async function loadPublishedAppListingsOrdered(): Promise<Listing[]> {
+  try {
+    return await loadPublishedCached();
+  } catch (err) {
+    console.warn(
+      "[listing-catalog] Cached catalog load failed; serving bundled catalog only.",
+      err,
+    );
+    return bundledCatalog;
+  }
 }
 
 export async function loadPublishedListingById(id: string): Promise<Listing | null> {

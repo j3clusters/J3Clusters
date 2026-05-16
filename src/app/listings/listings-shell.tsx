@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
 import { ListingsView } from "./ListingsView";
-
+import { loadPublishedAppListingsOrdered } from "@/lib/listing-catalog";
 export type ListingsSearchParams = {
   mode?: string;
   type?: string;
@@ -11,11 +11,13 @@ export type ListingsSearchParams = {
   sort?: string;
 };
 
+export const revalidate = 60;
+
 function budgetMaxFromParam(budget: string | undefined) {
   return budget?.includes("-") ? (budget.split("-")[1] ?? "") : "";
 }
 
-export function ListingsShell({
+export async function ListingsShell({
   purposeRoute,
   searchParams,
 }: {
@@ -29,6 +31,8 @@ export function ListingsShell({
         ? "rent"
         : (searchParams.mode ?? "");
 
+  const catalogItems = await loadPublishedAppListingsOrdered();
+
   return (
     <Suspense
       fallback={
@@ -40,6 +44,7 @@ export function ListingsShell({
     >
       <ListingsView
         purposeRoute={purposeRoute}
+        catalogItems={catalogItems}
         initialMode={initialMode}
         initialType={searchParams.type ?? ""}
         initialCity={searchParams.city ?? ""}

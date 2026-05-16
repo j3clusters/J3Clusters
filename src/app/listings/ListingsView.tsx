@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PropertyCard } from "@/components/PropertyCard";
+import { filterListingsByPurposeRouteMode } from "@/lib/listing-catalog";
 import type { Listing } from "@/types/listing";
 
 type ListingsViewProps = {
   /** `/listings` vs dedicated `/listings/buy` or `/listings/rent` */
   purposeRoute?: "listings" | "buy" | "rent";
+  /** Server-provided catalog — avoids a client fetch on first paint. */
+  catalogItems: Listing[];
   initialMode: string;
   initialType: string;
   initialCity: string;
@@ -30,6 +33,7 @@ function normalizePurposeMode(raw: string): "" | "buy" | "rent" {
 
 export function ListingsView({
   purposeRoute = "listings",
+  catalogItems,
   initialMode,
   initialType,
   initialCity,
@@ -38,7 +42,7 @@ export function ListingsView({
   initialSort,
 }: ListingsViewProps) {
   const router = useRouter();
-  const [items, setItems] = useState<Listing[] | null>(null);
+  const [items, setItems] = useState<Listing[]>(catalogItems);
   const [mode, setMode] = useState(() => normalizePurposeMode(initialMode));
   const [type, setType] = useState(initialType);
   const [city, setCity] = useState(initialCity);
@@ -67,18 +71,13 @@ export function ListingsView({
   ]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (mode) {
-      params.set("mode", mode);
-    }
-    const query = params.toString();
-    fetch(query ? `/api/listings?${query}` : "/api/listings")
-      .then((response) => response.json())
-      .then((payload) => {
-        setItems(Array.isArray(payload.items) ? payload.items : []);
-      })
-      .catch(() => setItems([]));
-  }, [mode]);
+    setItems(catalogItems);
+  }, [catalogItems]);
+
+  const itemsForPurpose = useMemo(
+    () => filterListingsByPurposeRouteMode(items, mode),
+    [items, mode],
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -112,16 +111,12 @@ export function ListingsView({
   }, [purposeRoute, mode, type, city, minBudget, maxBudget, sort, router]);
 
   const filtered = useMemo(() => {
-    if (!items) {
-      return [];
-    }
-
     const normalizedType = type.trim().toLowerCase();
     const normalizedCity = city.trim().toLowerCase();
     const minBudgetValue = Number(minBudget || "0");
     const budgetValue = Number(maxBudget || "0");
 
-    const filteredItems = items.filter((item) => {
+    const filteredItems = itemsForPurpose.filter((item) => {
       const typeOk =
         !normalizedType || item.type.toLowerCase() === normalizedType;
       const cityOk =
@@ -141,7 +136,7 @@ export function ListingsView({
       }
       return b.price - a.price;
     });
-  }, [items, type, city, minBudget, maxBudget, sort]);
+  }, [itemsForPurpose, type, city, minBudget, maxBudget, sort]);
 
   const clearFilters = () => {
     setType("");
@@ -216,9 +211,6 @@ export function ListingsView({
     safePage * pageSize,
   );
   const compareItems = useMemo(() => {
-    if (!items) {
-      return [];
-    }
     return compareIds
       .map((id) => items.find((item) => item.id === id))
       .filter((item): item is Listing => Boolean(item));
@@ -253,9 +245,6 @@ export function ListingsView({
   }, [mode]);
 
   const listingsResultLine = useMemo(() => {
-    if (items === null) {
-      return "Loading listings...";
-    }
     const pagePart = `page ${safePage} of ${totalPages}`;
     if (mode === "rent") {
       return `${filtered.length} rentals match your filters • ${pagePart}`;
@@ -264,7 +253,7 @@ export function ListingsView({
       return `${filtered.length} sale listings match your filters • ${pagePart}`;
     }
     return `${filtered.length} properties found • ${pagePart}`;
-  }, [items, filtered.length, mode, safePage, totalPages]);
+  }, [filtered.length, mode, safePage, totalPages]);
 
   const listingsIntro = useMemo(() => {
     if (mode === "rent") {
@@ -412,6 +401,23 @@ export function ListingsView({
               />
             ))}
           </div>
+          {filtered.length === 0 ? (
+            <p className="home-empty-note listings-empty-note">
+              {items.length === 0
+                ? mode === "rent"
+                  ? "No rental listings are available yet. Browse properties for sale or check back soon."
+                  : "No published listings yet. Check back soon or list a property as a consultant."
+                : "No properties match these filters. Try clearing filters or browse all listings."}
+              {items.length > 0 ? (
+                <>
+                  {" "}
+                  <button type="button" className="listings-clear-link" onClick={clearFilters}>
+                    Clear filters
+                  </button>
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {filtered.length > 0 ? (
             <div className="pagination-row">
               <button

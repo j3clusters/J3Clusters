@@ -5,12 +5,8 @@ import {
   SITE_GENERAL_WHATSAPP_MESSAGE,
   SITE_WHATSAPP,
 } from "@/lib/site-contact";
-import { buildMailtoInquiryHref, getSiteContactEmail } from "@/lib/site-social";
-
 export default function ContactPage() {
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
-  const email = getSiteContactEmail();
-  const mailHref = buildMailtoInquiryHref(email);
 
   return (
     <main className="container section narrow">
@@ -19,16 +15,9 @@ export default function ContactPage() {
         Share your requirement and our team will help you shortlist suitable
         properties.
       </p>
-      <p className="contact-email-intro">
-        Prefer email? Send a message to{" "}
-        <a href={mailHref} className="contact-email-link">
-          {email}
-        </a>
-        .
-      </p>
       <div className="contact-social-block">
         <p className="contact-social-label">Social links</p>
-        <SocialLinks variant="page" />
+        <SocialLinks variant="page" iconOnly showAllPlatforms />
       </div>
       <p className="contact-whatsapp-intro">
         Prefer instant chat?{" "}

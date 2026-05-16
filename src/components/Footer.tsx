@@ -6,97 +6,124 @@ import {
   SITE_GENERAL_WHATSAPP_MESSAGE,
   SITE_WHATSAPP,
 } from "@/lib/site-contact";
-import { buildMailtoInquiryHref, getSiteContactEmail } from "@/lib/site-social";
-
 export function Footer() {
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
-  const email = getSiteContactEmail();
-  const mailHref = buildMailtoInquiryHref(email);
+
   return (
     <footer className="site-footer">
-      <div className="container footer-grid">
-        <div>
-          <p className="footer-brand">J3 Clusters</p>
-          <p className="footer-copy">
-            <strong>About us:</strong> J3 Clusters is committed to delivering a
-            reliable and transparent property experience for buyers, renters,
-            and sellers. We maintain high standards through verified listings,
-            clear communication, and consistent customer support. Our objective
-            is to simplify decision-making and build long-term trust across
-            growing Indian cities. We continuously improve our platform to meet
-            evolving market expectations. Integrity, accountability, and service
-            excellence remain central to everything we do.
-          </p>
-        </div>
-        <div>
-          <p className="footer-heading">Explore</p>
-          <p>
-            <Link href="/listings/buy">Buy a home</Link>
-          </p>
-          <p>
-            <Link href="/listings/rent">Rent a property</Link>
-          </p>
-          <p>
-            <Link href="/register/consultant">List as consultant</Link>
-          </p>
-          <p>
-            <Link href="/register/member">Join as member</Link>
-          </p>
-        </div>
-        <div>
-          <p className="footer-heading">Company</p>
-          <p>
-            <Link href="/about">About us</Link>
-          </p>
-          <p>
-            <Link href="/faq">FAQ</Link>
-          </p>
-          <p>
-            <Link href="/privacy">Privacy policy</Link>
-          </p>
-          <p>
-            <Link href="/terms">Terms &amp; conditions</Link>
-          </p>
-        </div>
-        <div>
-          <p className="footer-heading">Consultants</p>
-          <p>
-            <Link href="/community/consultant">Consultant community</Link>
-          </p>
-          <p>
-            <Link href="/register/consultant">Register free</Link>
-          </p>
-          <p>
-            <Link href="/login">Consultant login</Link>
-          </p>
-          <p>
-            <Link href="/contact">Contact us</Link>
-          </p>
-          <p>
-            <a href={mailHref}>Email ({email})</a>
-          </p>
-          <p>
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              WhatsApp ({SITE_WHATSAPP.display})
-            </a>
-          </p>
-          <p>
-            <Link href="/admin/login">Admin login</Link>
-          </p>
+      <div className="footer-main">
+        <div className="container footer-grid">
+          <div className="footer-col footer-col-brand">
+            <Link href="/" className="footer-brand-link" aria-label="J3 Clusters home">
+              <span className="brand-mark footer-brand-mark" aria-hidden="true">
+                <span className="brand-mark-dot brand-mark-dot-1" />
+                <span className="brand-mark-dot brand-mark-dot-2" />
+                <span className="brand-mark-dot brand-mark-dot-3" />
+              </span>
+              <span className="brand-text footer-brand-text">
+                <span className="brand-text-j3">J3</span>
+                <span className="brand-text-clusters">Clusters</span>
+              </span>
+            </Link>
+            <p className="footer-tagline">Trusted local property platform</p>
+            <p className="footer-copy">
+              Verified listings, transparent pricing, and consultant support for
+              buyers, renters, and sellers across growing Indian cities.
+            </p>
+            <Link href="/about" className="footer-about-link">
+              Learn more about us
+            </Link>
+            <div className="footer-contact-actions">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-contact-btn"
+                title={SITE_WHATSAPP.display}
+              >
+                WhatsApp
+              </a>
+            </div>
+          </div>
+
+          <div className="footer-col">
+            <p className="footer-heading">Explore</p>
+            <ul className="footer-nav">
+              <li>
+                <Link href="/listings/buy">Buy a home</Link>
+              </li>
+              <li>
+                <Link href="/listings/rent">Rent a property</Link>
+              </li>
+              <li>
+                <Link href="/listings">All listings</Link>
+              </li>
+              <li>
+                <Link href="/register/consultant">List as consultant</Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="footer-col">
+            <p className="footer-heading">Company</p>
+            <ul className="footer-nav">
+              <li>
+                <Link href="/about">About us</Link>
+              </li>
+              <li>
+                <Link href="/faq">FAQ</Link>
+              </li>
+              <li>
+                <Link href="/contact">Contact us</Link>
+              </li>
+              <li>
+                <Link href="/privacy">Privacy policy</Link>
+              </li>
+              <li>
+                <Link href="/terms">Terms &amp; conditions</Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="footer-col">
+            <p className="footer-heading">Account</p>
+            <ul className="footer-nav">
+              <li>
+                <Link href="/register/consultant">Register as consultant</Link>
+              </li>
+              <li>
+                <Link href="/register/member">Join as member</Link>
+              </li>
+              <li>
+                <Link href="/community/consultant">Consultant community</Link>
+              </li>
+              <li>
+                <Link href="/login">Sign in</Link>
+              </li>
+              <li>
+                <Link href="/admin/login">Admin login</Link>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
+
       <div className="footer-social-band">
         <div className="container footer-social-band-inner">
           <p className="footer-social-title">Follow &amp; connect</p>
-          <SocialLinks variant="footer" />
+          <SocialLinks variant="footer" iconOnly />
         </div>
       </div>
+
       <div className="container footer-bottom">
-        <p>Copyright 2026 J3 Clusters. All rights reserved.</p>
+        <p className="footer-copyright">
+          &copy; {new Date().getFullYear()} J3 Clusters. All rights reserved.
+        </p>
+        <nav className="footer-bottom-nav" aria-label="Footer legal">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/contact">Contact</Link>
+        </nav>
       </div>
     </footer>
   );

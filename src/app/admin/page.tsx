@@ -314,6 +314,7 @@ export default async function AdminDashboardPage(props: PageProps) {
 
   return (
     <div className="admin-portal admin-dashboard">
+      <div className="admin-dashboard-sticky-head">
       <header className="admin-topbar admin-dashboard-topbar">
         <div className="container admin-topbar-inner">
           <div className="admin-topbar-brand">
@@ -338,16 +339,18 @@ export default async function AdminDashboardPage(props: PageProps) {
           </div>
         </div>
       </header>
+        <div className="container admin-quick-nav-wrap">
+          <nav className="admin-quick-nav" aria-label="Jump to section">
+            <a href="#submissions">Submissions</a>
+            <a href="#listings">Listings</a>
+            <a href="#recycle">Recycle bin</a>
+            <a href="#leads">Leads</a>
+            <a href="#audit">Audit log</a>
+          </nav>
+        </div>
+      </div>
 
       <main className="admin-portal-main section">
-        <nav className="admin-quick-nav" aria-label="Jump to section">
-          <a href="#submissions">Submissions</a>
-          <a href="#listings">Listings</a>
-          <a href="#recycle">Recycle bin</a>
-          <a href="#leads">Leads</a>
-          <a href="#audit">Audit log</a>
-        </nav>
-
         <div className="admin-overview-strip">
           <div className="admin-metrics admin-dashboard-metrics">
             <div className="admin-metric-card admin-metric-pending">
@@ -506,7 +509,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                         aria-label={`Select ${submission.ownerName} for bulk action`}
                       />
                     ) : (
-                      <span className="admin-text-muted">â€”</span>
+                      <span className="admin-text-muted">—</span>
                     )}
                   </td>
                   <td className="admin-td">{formatUtc(submission.createdAt)}</td>
@@ -555,7 +558,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       {submission.status === "PENDING" ? (
                         submission.reviewedAt ? (
                           <span className="admin-text-muted admin-status-sub">
-                            Reviewed Â· {formatUtc(submission.reviewedAt)}
+                            Reviewed · {formatUtc(submission.reviewedAt)}
                           </span>
                         ) : (
                           <span className="admin-text-muted admin-status-sub">
@@ -834,7 +837,7 @@ export default async function AdminDashboardPage(props: PageProps) {
           {filteredPublishedListings.length} published listings
           {activeView === "ALL" ? "" : ` (${activeView === "RENT" ? "For rent" : "For sale"})`}
           {listingsTotalPages > 1
-            ? ` â€¢ page ${safeLpage} of ${listingsTotalPages}`
+            ? ` • page ${safeLpage} of ${listingsTotalPages}`
             : ""}
         </p>
         <div className="admin-table-wrap">
@@ -874,7 +877,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                   <td className="admin-td">
                     <div className="admin-owner-cell">
                       <span>
-                        {listing.approvedAt ? formatUtc(listing.approvedAt) : "â€”"}
+                        {listing.approvedAt ? formatUtc(listing.approvedAt) : "—"}
                       </span>
                       <span className="admin-text-muted">
                         {listing.approvedByEmail ?? "Unknown admin"}
@@ -1066,7 +1069,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       <>
                         <div>{row.submission.ownerName}</div>
                         <span className="admin-text-muted">
-                          {listingTypeLabel(row.submission.type)} Â·{" "}
+                          {listingTypeLabel(row.submission.type)} ·{" "}
                           {row.submission.city}
                         </span>
                       </>
@@ -1082,7 +1085,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                       ? row.listing.price.toLocaleString("en-IN")
                       : row.kind === "submission"
                         ? row.submission.price.toLocaleString("en-IN")
-                        : "â€”"}
+                        : "—"}
                   </td>
                   <td className="admin-td">
                     <div className="admin-action-stack">
@@ -1289,7 +1292,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                     </div>
                   </td>
                   <td className="admin-td admin-td-clip">
-                    {lead.message ?? "â€”"}
+                    {lead.message ?? "—"}
                   </td>
                   <td className="admin-td">
                     <form action={deleteContactLeadAction.bind(null, lead.id)}>
@@ -1386,7 +1389,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                     {log.targetType} / {log.targetId}
                   </td>
                   <td className="admin-td admin-td-clip">
-                    {log.message ?? "â€”"}
+                    {log.message ?? "—"}
                   </td>
                 </tr>
               ))}
@@ -1403,7 +1406,7 @@ export default async function AdminDashboardPage(props: PageProps) {
       </section>
 
       <p className="admin-portal-footer">
-        <Link href="/">â† Back to website</Link>
+        <Link href="/">← Back to website</Link>
       </p>
       </main>
     </div>

@@ -5,10 +5,6 @@ import { USER_SESSION_COOKIE_NAME } from "@/lib/auth/jwt-cookies";
 import { verifyUserJwt } from "@/lib/auth/verify-session-token";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
 import {
-  buildMailtoInquiryHref,
-  getSiteContactEmail,
-} from "@/lib/site-social";
-import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,
 } from "@/lib/site-contact";
@@ -29,7 +25,6 @@ export async function Header() {
   const role = effectiveAccountRole(session);
 
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
-  const mailHref = buildMailtoInquiryHref(getSiteContactEmail());
 
   return (
     <header className="site-header">
@@ -49,9 +44,6 @@ export async function Header() {
                 <Link href="/community/member">Members</Link>
               </>
             ) : null}
-            <a href={mailHref} className="top-strip-email">
-              Email
-            </a>
             <a
               href={whatsappHref}
               className="top-strip-whatsapp"

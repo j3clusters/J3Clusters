@@ -1,13 +1,25 @@
 import Link from "next/link";
 
+import { HeroFeaturedProperties } from "@/components/HeroFeaturedProperties";
+import {
+  buildWhatsAppUrl,
+  SITE_GENERAL_WHATSAPP_MESSAGE,
+} from "@/lib/site-contact";
 import { PropertyCard } from "@/components/PropertyCard";
-import { loadPublishedAppListingsOrdered } from "@/lib/listing-catalog";
+import {
+  loadPublishedAppListingsOrdered,
+  pickHomeFeaturedListings,
+} from "@/lib/listing-catalog";
+
+export const revalidate = 60;
 
 export default async function HomePage() {
   const ordered = await loadPublishedAppListingsOrdered();
-  const featured = ordered.slice(0, 6);
-  const citiesCount = new Set(featured.map((item) => item.city)).size;
-  const popularCities = Array.from(new Set(featured.map((item) => item.city))).slice(
+  const featured = pickHomeFeaturedListings(ordered, 6);
+  const heroFeatured = featured;
+  const listingCount = ordered.length;
+  const citiesCount = new Set(ordered.map((item) => item.city)).size;
+  const popularCities = Array.from(new Set(ordered.map((item) => item.city))).slice(
     0,
     6,
   );
@@ -17,7 +29,7 @@ export default async function HomePage() {
       <section className="hero">
         <div className="container">
           <div className="hero-layout">
-            <div>
+            <div className="hero-intro">
               <p className="pill">Trusted local property platform</p>
               <h1>Find a home that fits your life</h1>
               <p className="hero-copy">
@@ -26,11 +38,11 @@ export default async function HomePage() {
               </p>
               <div className="hero-metrics">
                 <div>
-                  <strong>{featured.length}+</strong>
+                  <strong>{listingCount > 0 ? `${listingCount}+` : "—"}</strong>
                   <span>verified listings</span>
                 </div>
                 <div>
-                  <strong>{citiesCount}+</strong>
+                  <strong>{citiesCount > 0 ? `${citiesCount}+` : "—"}</strong>
                   <span>active cities</span>
                 </div>
                 <div>
@@ -39,101 +51,10 @@ export default async function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="hero-highlight-card">
-              <div className="hero-highlight-eyebrow">
-                <span className="hero-highlight-spark" aria-hidden="true">
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="14"
-                    height="14"
-                    fill="currentColor"
-                  >
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-                  </svg>
-                </span>
-                <span className="hero-highlight-eyebrow-text">
-                  Market spotlight
-                </span>
-                <span className="hero-highlight-live-pill">
-                  <span
-                    className="hero-highlight-live-dot"
-                    aria-hidden="true"
-                  />
-                  Live
-                </span>
-              </div>
-              <h3 className="hero-highlight-title">Hot in demand this week</h3>
-              <p className="hero-highlight-desc">
-                High-intent buyers are searching premium gated apartments in{" "}
-                <span className="hero-highlight-city">Chennai</span>,{" "}
-                <span className="hero-highlight-city">Hyderabad</span>,{" "}
-                <span className="hero-highlight-city">Bangalore</span>, and{" "}
-                <span className="hero-highlight-city">Pune</span>.
-              </p>
-              <ul className="hero-highlight-points">
-                <li>
-                  <span
-                    className="hero-highlight-point-check"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="12"
-                      height="12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </span>
-                  Verified listings only
-                </li>
-                <li>
-                  <span
-                    className="hero-highlight-point-check"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="12"
-                      height="12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </span>
-                  Consultant-assisted journey
-                </li>
-                <li>
-                  <span
-                    className="hero-highlight-point-check"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      width="12"
-                      height="12"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  </span>
-                  Instant lead capture
-                </li>
-              </ul>
-            </div>
+            <HeroFeaturedProperties items={heroFeatured} />
           </div>
+
+          <div className="hero-search-block">
           <div className="search-tabs">
             <Link href="/listings/buy" className="search-tab-active">
               Buy
@@ -200,7 +121,7 @@ export default async function HomePage() {
             </Link>
 
             <Link
-              href="/listings?type=Villa"
+              href="/listings?type=Plot"
               className="hero-quick-link hero-quick-link-villa"
             >
               <span className="hero-quick-link-icon" aria-hidden="true">
@@ -220,8 +141,8 @@ export default async function HomePage() {
                 </svg>
               </span>
               <span className="hero-quick-link-label">
-                <strong>Browse Villas</strong>
-                <small>Premium gated homes</small>
+                <strong>Browse Plots</strong>
+                <small>Residential land &amp; layouts</small>
               </span>
               <span className="hero-quick-link-arrow" aria-hidden="true">
                 →
@@ -229,7 +150,7 @@ export default async function HomePage() {
             </Link>
 
             <Link
-              href="/listings?type=PG"
+              href="/listings/rent"
               className="hero-quick-link hero-quick-link-pg"
             >
               <span className="hero-quick-link-icon" aria-hidden="true">
@@ -249,8 +170,8 @@ export default async function HomePage() {
                 </svg>
               </span>
               <span className="hero-quick-link-label">
-                <strong>Find PG</strong>
-                <small>Managed shared stays</small>
+                <strong>Rentals &amp; PG</strong>
+                <small>Rent homes and shared stays</small>
               </span>
               <span className="hero-quick-link-arrow" aria-hidden="true">
                 →
@@ -290,60 +211,150 @@ export default async function HomePage() {
             <span>Verified consultant listings</span>
             <span>Dedicated support team</span>
           </div>
+          </div>
         </div>
       </section>
 
-      <section className="section container">
-        <div className="section-head">
-          <h2>Browse by property type</h2>
-          <Link href="/listings">See all categories</Link>
-        </div>
-        <div className="type-grid">
-          <Link href="/listings?type=Apartment" className="type-tile">
-            <strong>Apartments</strong>
-            <span>Ready-to-move and under-construction homes</span>
-          </Link>
-          <Link href="/listings?type=Villa" className="type-tile">
-            <strong>Villas</strong>
-            <span>Premium gated villas and independent houses</span>
-          </Link>
-          <Link href="/listings?type=PG" className="type-tile">
-            <strong>PG</strong>
-            <span>Paying guest rooms and managed shared stays</span>
-          </Link>
+      <section className="section home-type-section" aria-labelledby="home-type-heading">
+        <div className="container home-type-panel">
+          <div className="section-head">
+            <h2 id="home-type-heading">Browse by property type</h2>
+            <Link href="/listings">See all categories</Link>
+          </div>
+          <div className="type-grid">
+            <Link
+              href="/listings?type=Apartment"
+              className="type-tile type-tile-apartment"
+            >
+              <span className="type-tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21V7l9-4 9 4v14" />
+                  <path d="M9 21v-6h6v6" />
+                  <path d="M9 11h.01M15 11h.01M9 7h.01M15 7h.01" />
+                </svg>
+              </span>
+              <span className="type-tile-body">
+                <strong>Apartments</strong>
+                <span>Ready-to-move and under-construction homes</span>
+              </span>
+              <span className="type-tile-arrow" aria-hidden="true">→</span>
+            </Link>
+            <Link href="/listings?type=Plot" className="type-tile type-tile-villa">
+              <span className="type-tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 12 12 3l10 9" />
+                  <path d="M5 10v11h14V10" />
+                  <path d="M10 21v-6h4v6" />
+                </svg>
+              </span>
+              <span className="type-tile-body">
+                <strong>Plots</strong>
+                <span>Residential plots and approved layouts</span>
+              </span>
+              <span className="type-tile-arrow" aria-hidden="true">→</span>
+            </Link>
+            <Link href="/listings/rent" className="type-tile type-tile-pg">
+              <span className="type-tile-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7h18v12H3z" />
+                  <path d="M3 11h18" />
+                  <path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2" />
+                </svg>
+              </span>
+              <span className="type-tile-body">
+                <strong>Rentals</strong>
+                <span>Rental homes, flats, and PG options</span>
+              </span>
+              <span className="type-tile-arrow" aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="section container">
-        <div className="section-head">
-          <h2>Featured listings</h2>
-          <Link href="/listings">View all</Link>
-        </div>
-        <div className="card-grid">
-          {featured.map((item) => (
-            <PropertyCard key={item.id} item={item} />
-          ))}
+      <section
+        className="section home-featured-section"
+        aria-labelledby="home-featured-heading"
+      >
+        <div className="container">
+          <div className="section-head section-head-stacked">
+            <div>
+              <h2 id="home-featured-heading">Featured listings</h2>
+              <p className="section-lead">
+                Hand-picked homes from verified consultants — updated live from
+                our catalog.
+              </p>
+            </div>
+            <Link href="/listings">View all</Link>
+          </div>
+          {featured.length > 0 ? (
+            <div className="card-grid home-featured-grid">
+              {featured.map((item) => (
+                <PropertyCard key={item.id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <p className="home-empty-note">
+              No published listings yet.{" "}
+              <Link href="/register/consultant">List a property</Link> or{" "}
+              <Link href="/listings">check back soon</Link>.
+            </p>
+          )}
         </div>
       </section>
 
-      <section className="section container">
-        <div className="section-head">
-          <h2>How J3 Clusters works</h2>
-          <Link href="/contact">Talk to an advisor</Link>
-        </div>
-        <div className="steps-grid">
-          <article className="step-card">
-            <strong>1. Search smarter</strong>
-            <p>Filter by city, type, and budget to shortlist relevant homes fast.</p>
-          </article>
-          <article className="step-card">
-            <strong>2. Compare options</strong>
-            <p>Use side-by-side comparison to evaluate price, space, and amenities.</p>
-          </article>
-          <article className="step-card">
-            <strong>3. Close confidently</strong>
-            <p>Connect with property consultants through one streamlined workflow.</p>
-          </article>
+      <section className="section home-steps-section" aria-labelledby="home-steps-heading">
+        <div className="container home-steps-panel">
+          <div className="section-head">
+            <h2 id="home-steps-heading">How J3 Clusters works</h2>
+            <Link href="/contact">Talk to an advisor</Link>
+          </div>
+          <div className="steps-grid">
+            <article className="step-card step-card-search">
+              <span className="step-card-num" aria-hidden="true">
+                1
+              </span>
+              <span className="step-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+              </span>
+              <div className="step-card-body">
+                <strong>Search smarter</strong>
+                <p>Filter by city, type, and budget to shortlist relevant homes fast.</p>
+              </div>
+            </article>
+            <article className="step-card step-card-compare">
+              <span className="step-card-num" aria-hidden="true">
+                2
+              </span>
+              <span className="step-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />
+                </svg>
+              </span>
+              <div className="step-card-body">
+                <strong>Compare options</strong>
+                <p>Use side-by-side comparison to evaluate price, space, and amenities.</p>
+              </div>
+            </article>
+            <article className="step-card step-card-close">
+              <span className="step-card-num" aria-hidden="true">
+                3
+              </span>
+              <span className="step-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </span>
+              <div className="step-card-body">
+                <strong>Close confidently</strong>
+                <p>Connect with property consultants through one streamlined workflow.</p>
+              </div>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -360,51 +371,48 @@ export default async function HomePage() {
               </Link>
             ))
           ) : (
-            <span className="meta">Seed listings to see city chips here.</span>
+            <p className="home-empty-note city-chip-empty">
+              Cities appear when listings are published.
+            </p>
           )}
         </div>
       </section>
 
-      <section className="section container">
-        <div className="cta-banner">
-          <div>
-            <h2>Have a property to sell or rent?</h2>
-            <p className="meta">
-              Register as a property consultant — free listings with verified
-              workflow.
-            </p>
-          </div>
-          <div className="cta-actions">
-            <Link href="/register/consultant" className="primary-nav-cta">
-              Register free
-            </Link>
-            <Link href="/login" className="cta-contact-btn">
-              Sign in
-            </Link>
-            <Link
-              href="/contact"
-              className="cta-contact-btn"
-              aria-label="Contact sales"
-            >
-              <span className="cta-contact-btn-icon" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z" />
-                </svg>
-              </span>
-              <span>Contact sales</span>
-              <span className="cta-contact-btn-arrow" aria-hidden="true">
-                →
-              </span>
-            </Link>
+      <section className="section home-cta-section" aria-labelledby="home-cta-heading">
+        <div className="container">
+          <div className="cta-banner">
+            <div className="cta-banner-content">
+              <p className="cta-banner-badge">Free for property consultants</p>
+              <h2 id="home-cta-heading">Have a property to sell or rent?</h2>
+              <p className="cta-banner-copy">
+                List on J3 Clusters with a verified workflow — reach serious
+                buyers and renters across growing cities.
+              </p>
+              <ul className="cta-banner-points">
+                <li>Free listing submissions</li>
+                <li>Verified consultant profile</li>
+                <li>Dedicated support team</li>
+              </ul>
+            </div>
+            <div className="cta-actions">
+              <Link href="/register/consultant" className="cta-primary-btn">
+                Register free
+              </Link>
+              <Link href="/login" className="cta-secondary-btn">
+                Sign in
+              </Link>
+              <a
+                href={buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cta-secondary-btn"
+              >
+                WhatsApp us
+              </a>
+              <Link href="/contact" className="cta-secondary-btn">
+                Contact sales
+              </Link>
+            </div>
           </div>
         </div>
       </section>
