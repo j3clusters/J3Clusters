@@ -6,7 +6,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: "Contact us",
   description:
-    "Get in touch with J3 Clusters for property enquiries, consultant support, and listing questions. WhatsApp and contact form available.",
+    "Get in touch with J3 Clusters for property enquiries, agent support, and listing questions. WhatsApp and contact form available.",
   path: "/contact",
   keywords: ["contact J3 Clusters", "property enquiry", "real estate support"],
 });

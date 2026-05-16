@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
+
 const listingType = z.enum(["Apartment", "Villa", "Plot", "PG"]);
 const listingPurpose = z.enum(["Sale", "Rent"]);
 const furnishingType = z.enum(["Unfurnished", "SemiFurnished", "Furnished"]);
@@ -27,7 +29,10 @@ export const propertySubmissionSchema = z.object({
   availableFrom: z.string().trim().min(8).max(40),
   legalClearance: z.boolean(),
   imageUrl: z.string().trim().min(1).max(2048),
-  imageUrls: z.array(z.string().trim().min(1).max(2048)).min(1).max(10),
+  imageUrls: z
+    .array(z.string().trim().min(1).max(2048))
+    .min(1)
+    .max(MAX_LISTING_IMAGES),
   price: z.coerce.number().int().positive().max(999_999_999_999),
   description: z.string().trim().min(10).max(8000),
 })

@@ -134,6 +134,7 @@ export async function approveSubmissionAction(
 
   const approvedAt = new Date();
   let newListingId: string | null = null;
+  let republishedListingId: string | null = null;
   await prisma.$transaction(async (tx) => {
     const updated = await tx.propertySubmission.updateMany({
       where: {
@@ -151,13 +152,28 @@ export async function approveSubmissionAction(
       throw new Error("Submission was already processed.");
     }
 
-    const listing = await tx.listing.create({
-      data: listingDataFromSubmission(submission, {
-        approvedAt,
-        approvedByEmail: admin.email,
-      }),
+    const existingListing = await tx.listing.findUnique({
+      where: { sourceSubmissionId: submission.id },
     });
-    newListingId = listing.id;
+    if (existingListing) {
+      const listing = await tx.listing.update({
+        where: { id: existingListing.id },
+        data: listingDataFromSubmission(submission, {
+          approvedAt,
+          approvedByEmail: admin.email,
+        }),
+      });
+      newListingId = listing.id;
+      republishedListingId = listing.id;
+    } else {
+      const listing = await tx.listing.create({
+        data: listingDataFromSubmission(submission, {
+          approvedAt,
+          approvedByEmail: admin.email,
+        }),
+      });
+      newListingId = listing.id;
+    }
     await tx.adminAuditLog.create({
       data: auditLogData(admin.email, {
         action: "APPROVE_SUBMISSION",
@@ -167,6 +183,10 @@ export async function approveSubmissionAction(
       }),
     });
   });
+
+  if (republishedListingId) {
+    await removeListingFromRecycleBin(republishedListingId);
+  }
 
   if (newListingId) {
     const emailed = await sendSubmissionApprovedEmail({
@@ -337,14 +357,24 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
         },
       });
 
-      await tx.listing.createMany({
-        data: pendingSubmissions.map((submission) =>
-          listingDataFromSubmission(submission, {
-            approvedAt,
-            approvedByEmail: admin.email,
-          }),
-        ),
-      });
+      for (const submission of pendingSubmissions) {
+        const existingListing = await tx.listing.findUnique({
+          where: { sourceSubmissionId: submission.id },
+        });
+        const data = listingDataFromSubmission(submission, {
+          approvedAt,
+          approvedByEmail: admin.email,
+        });
+        if (existingListing) {
+          await tx.listing.update({
+            where: { id: existingListing.id },
+            data,
+          });
+        } else {
+          await tx.listing.create({ data });
+        }
+      }
+
       await tx.adminAuditLog.createMany({
         data: pendingSubmissions.map((submission) =>
           auditLogData(admin.email, {
@@ -363,6 +393,9 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
       },
       select: { id: true, sourceSubmissionId: true },
     });
+    for (const row of publishedRows) {
+      await removeListingFromRecycleBin(row.id);
+    }
     const listingIdBySubmission = new Map(
       publishedRows
         .filter((row) => row.sourceSubmissionId)
@@ -1083,6 +1116,45 @@ export async function approveConsultantAction(
   revalidatePath("/admin");
 }
 
+export async function approveMemberAction(
+  userId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const user = await prisma.appUser.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, accountStatus: true, email: true, name: true },
+  });
+  if (!user || user.role !== "MEMBER") {
+    return;
+  }
+  if (user.accountStatus === AppUserAccountStatus.APPROVED) {
+    return;
+  }
+
+  const approvedAt = new Date();
+  await prisma.appUser.update({
+    where: { id: userId },
+    data: {
+      accountStatus: AppUserAccountStatus.APPROVED,
+      approvedAt,
+      approvedByEmail: admin.email,
+    },
+  });
+
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "APPROVE_MEMBER",
+      targetType: "AppUser",
+      targetId: userId,
+      message: `${user.name} <${user.email}>`,
+    }),
+  });
+
+  revalidatePath("/admin");
+}
+
 export async function rejectConsultantAction(
   userId: string,
   formData?: FormData,
@@ -1112,6 +1184,44 @@ export async function rejectConsultantAction(
   await prisma.adminAuditLog.create({
     data: auditLogData(admin.email, {
       action: "REJECT_CONSULTANT",
+      targetType: "AppUser",
+      targetId: userId,
+      message: `${user.name} <${user.email}>`,
+    }),
+  });
+
+  revalidatePath("/admin");
+}
+
+export async function rejectMemberAction(
+  userId: string,
+  formData?: FormData,
+): Promise<void> {
+  void formData;
+  const admin = await requireAdmin();
+  const user = await prisma.appUser.findUnique({
+    where: { id: userId },
+    select: { id: true, role: true, accountStatus: true, email: true, name: true },
+  });
+  if (!user || user.role !== "MEMBER") {
+    return;
+  }
+  if (user.accountStatus === AppUserAccountStatus.REJECTED) {
+    return;
+  }
+
+  await prisma.appUser.update({
+    where: { id: userId },
+    data: {
+      accountStatus: AppUserAccountStatus.REJECTED,
+      approvedAt: null,
+      approvedByEmail: admin.email,
+    },
+  });
+
+  await prisma.adminAuditLog.create({
+    data: auditLogData(admin.email, {
+      action: "REJECT_MEMBER",
       targetType: "AppUser",
       targetId: userId,
       message: `${user.name} <${user.email}>`,

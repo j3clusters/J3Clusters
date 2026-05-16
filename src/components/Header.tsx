@@ -6,6 +6,7 @@ import {
   HeaderMainSessionNavFallback,
   HeaderTopSessionLinks,
 } from "@/components/HeaderSessionNav";
+import { SocialLinks } from "@/components/SocialLinks";
 import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,
@@ -23,6 +24,12 @@ export function Header() {
             selling
           </span>
           <span className="top-strip-links">
+            <SocialLinks
+              variant="header"
+              iconOnly
+              excludeIds={["whatsapp"]}
+              className="top-strip-social"
+            />
             <Suspense fallback={null}>
               <HeaderTopSessionLinks />
             </Suspense>
@@ -55,10 +62,21 @@ export function Header() {
         <nav aria-label="Primary">
           <ul className="nav-list">
             <li>
+              <Link href="/">Home</Link>
+            </li>
+            <li>
+              <Link href="/listings">Browse listings</Link>
+            </li>
+            <li>
               <Link href="/listings/buy">Buy</Link>
             </li>
             <li>
               <Link href="/listings/rent">Rent</Link>
+            </li>
+            <li>
+              <Link href="/post-property" className="primary-nav-cta header-post-property-cta">
+                Post Property <span className="header-nav-free">Free</span>
+              </Link>
             </li>
             <Suspense fallback={<HeaderMainSessionNavFallback />}>
               <HeaderMainSessionNav />

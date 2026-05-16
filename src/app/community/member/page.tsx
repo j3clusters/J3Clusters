@@ -16,7 +16,7 @@ export default function MemberCommunityPage() {
         </header>
 
         <ul className="community-page-points">
-          <li>Reveal property consultant phone numbers on published listings after you sign in.</li>
+          <li>{COMMUNITY_MEMBER.unlockPhone}</li>
           <li>Keep one account for both buying and renting across the marketplace.</li>
           <li>Listing and verification tools stay reserved for {CONSULTANT.rolePlural.toLowerCase()}.</li>
         </ul>
@@ -30,7 +30,7 @@ export default function MemberCommunityPage() {
 
         <p className="community-page-crosslink">
           Ready to list properties?{" "}
-          <Link href="/register/consultant">Register as a property consultant</Link>.
+          <Link href="/register/consultant">{COMMUNITY_MEMBER.registerAgentLink}</Link>.
         </p>
       </div>
     </main>

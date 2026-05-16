@@ -29,7 +29,8 @@ export async function POST(request: Request) {
   const { name, email, phone, city, password, accountRole } = parsed.data;
   const normalizedEmail = email.trim().toLowerCase();
   const accountStatus = accountStatusForNewUser(accountRole);
-  const requiresApproval = accountRole === "CONSULTANT";
+  const requiresApproval =
+    accountRole === "CONSULTANT" || accountRole === "MEMBER";
 
   let user: { id: string; email: string; role: "CONSULTANT" | "MEMBER" };
   try {

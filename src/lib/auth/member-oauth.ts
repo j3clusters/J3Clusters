@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import {
-  accountStatusForNewUser,
+  accountStatusForOAuthMember,
   loginBlockedMessage,
 } from "@/lib/app-user-account";
 import { clearOAuthStateCookies, type OAuthState } from "@/lib/auth/oauth-state";
@@ -11,7 +11,10 @@ import {
   USER_SESSION_COOKIE_NAME,
 } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { memberRedirectAfterLogin } from "@/lib/safe-next-path";
+import {
+  memberRedirectAfterLogin,
+  oauthErrorReturnPath,
+} from "@/lib/safe-next-path";
 
 export type MemberOAuthProvider = "google" | "facebook";
 
@@ -32,9 +35,11 @@ function providerIdWhere(profile: MemberOAuthProfile) {
 export function redirectOAuthError(
   request: Request,
   message: string,
-  path = "/login",
+  path?: string,
+  state?: { errorPath?: string },
 ) {
-  const target = new URL(path, request.url);
+  const targetPath = path ?? oauthErrorReturnPath(state?.errorPath);
+  const target = new URL(targetPath, request.url);
   target.searchParams.set("oauth_error", message);
   return NextResponse.redirect(target);
 }
@@ -64,11 +69,11 @@ export async function completeMemberOAuthSignIn(
   });
 
   if (user && user.role === "CONSULTANT") {
-    const blocked = loginBlockedMessage(user.accountStatus);
+    const blocked = loginBlockedMessage(user.accountStatus, user.role);
     return redirectOAuthError(
       request,
       blocked ??
-        "Property consultants must register with email and await admin approval.",
+        "Property agents must register with email and await admin approval.",
       "/register/consultant",
     );
   }
@@ -82,7 +87,7 @@ export async function completeMemberOAuthSignIn(
             phone: "",
             city: "",
             role: "MEMBER" as const,
-            accountStatus: accountStatusForNewUser("MEMBER"),
+            accountStatus: accountStatusForOAuthMember(),
             authProvider: "google",
             googleId: profile.providerId,
             passwordHash: null,
@@ -93,7 +98,7 @@ export async function completeMemberOAuthSignIn(
             phone: "",
             city: "",
             role: "MEMBER" as const,
-            accountStatus: accountStatusForNewUser("MEMBER"),
+            accountStatus: accountStatusForOAuthMember(),
             authProvider: "facebook",
             facebookId: profile.providerId,
             passwordHash: null,
@@ -130,7 +135,12 @@ export async function completeMemberOAuthSignIn(
           },
         });
       } else {
-        return redirectOAuthError(request, "Could not create your account.");
+        return redirectOAuthError(
+          request,
+          "Could not create your account.",
+          undefined,
+          state,
+        );
       }
     }
   }
@@ -140,12 +150,14 @@ export async function completeMemberOAuthSignIn(
     return redirectOAuthError(
       request,
       `Unable to sign in with this ${label} account.`,
+      undefined,
+      state,
     );
   }
 
-  const blocked = loginBlockedMessage(user.accountStatus);
+  const blocked = loginBlockedMessage(user.accountStatus, user.role);
   if (blocked) {
-    return redirectOAuthError(request, blocked);
+    return redirectOAuthError(request, blocked, undefined, state);
   }
 
   const linkData =
@@ -173,7 +185,12 @@ export async function completeMemberOAuthSignIn(
       role: "MEMBER",
     });
   } catch {
-    return redirectOAuthError(request, "Server sign-in configuration error.");
+    return redirectOAuthError(
+      request,
+      "Server sign-in configuration error.",
+      undefined,
+      state,
+    );
   }
 
   const destination = memberRedirectAfterLogin(state.next);

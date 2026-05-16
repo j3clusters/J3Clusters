@@ -27,7 +27,7 @@ export function Footer() {
             </Link>
             <p className="footer-tagline">Trusted local property platform</p>
             <p className="footer-copy">
-              Verified listings, transparent pricing, and consultant support for
+              Verified listings, transparent pricing, and agent support for
               buyers, renters, and sellers across growing Indian cities.
             </p>
             <Link href="/about" className="footer-about-link">
@@ -59,7 +59,10 @@ export function Footer() {
                 <Link href="/listings">All listings</Link>
               </li>
               <li>
-                <Link href="/register/consultant">List as consultant</Link>
+                <Link href="/mortgage-calculator">EMI calculator</Link>
+              </li>
+              <li>
+                <Link href="/register/consultant">List as agent</Link>
               </li>
             </ul>
           </div>
@@ -89,7 +92,7 @@ export function Footer() {
             <p className="footer-heading">Account</p>
             <ul className="footer-nav">
               <li>
-                <Link href="/register/consultant">Register as consultant</Link>
+                <Link href="/register/consultant">Register as agent</Link>
               </li>
               <li>
                 <Link href="/register/member">Join as member</Link>

@@ -1,25 +1,47 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { MemberSocialAuth } from "@/components/MemberSocialAuth";
+import { TurnstileWidget } from "@/components/TurnstileWidget";
 import {
   consultantRedirectAfterLogin,
   memberRedirectAfterLogin,
 } from "@/lib/safe-next-path";
-import { COMMUNITY_MEMBER, CONSULTANT } from "@/lib/consultant-labels";
+import { AUTH_LOGIN, COMMUNITY_MEMBER, CONSULTANT } from "@/lib/consultant-labels";
+import { isTurnstileConfigured } from "@/lib/auth/turnstile-public";
+import type { MemberOAuthAvailability } from "@/lib/auth/member-oauth-availability";
 
-export function LoginPageClient() {
+type LoginPageClientProps = {
+  oauth: MemberOAuthAvailability;
+};
+
+export function LoginPageClient({ oauth }: LoginPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const pendingConsultant = searchParams.get("pending") === "consultant";
+  const pendingMember = searchParams.get("pending") === "member";
+  const oauthError = searchParams.get("oauth_error");
+
+  const captchaRequired = isTurnstileConfigured();
+  const captchaOk = !captchaRequired || Boolean(captchaToken);
+
+  const handleCaptchaToken = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!captchaOk) {
+      setError("Complete the security check before signing in.");
+      return;
+    }
+
     setError(null);
     setPending(true);
     const form = event.currentTarget;
@@ -32,6 +54,7 @@ export function LoginPageClient() {
         body: JSON.stringify({
           email: String(data.get("email") ?? ""),
           password: String(data.get("password") ?? ""),
+          turnstileToken: captchaToken,
         }),
       });
 
@@ -53,6 +76,7 @@ export function LoginPageClient() {
         body: JSON.stringify({
           email: String(data.get("email") ?? ""),
           password: String(data.get("password") ?? ""),
+          turnstileToken: captchaToken,
         }),
       });
 
@@ -73,29 +97,64 @@ export function LoginPageClient() {
 
   return (
     <main className="portal-auth-page">
-      <div className="portal-auth-card">
-        <div className="portal-auth-header">
-          <span className="portal-auth-badge">Community access</span>
-          <h1>Welcome back</h1>
-          <p className="portal-auth-sub">
-            {COMMUNITY_MEMBER.role}s can sign in with email, Google, or Facebook.{" "}
-            {CONSULTANT.role}s use email after admin approval.
-          </p>
-        </div>
+      <div className="portal-auth-card portal-auth-card--login">
+        <header className="portal-auth-header">
+          <span className="portal-auth-badge">{AUTH_LOGIN.badge}</span>
+          <h1>{AUTH_LOGIN.title}</h1>
+          <ul className="portal-auth-role-hints" aria-label="Who can sign in">
+            <li>
+              <strong>{CONSULTANT.role}</strong>
+              <span>{AUTH_LOGIN.agentSignInHint}</span>
+            </li>
+            <li>
+              <strong>{COMMUNITY_MEMBER.role}</strong>
+              <span>{AUTH_LOGIN.memberSignInHint}</span>
+            </li>
+          </ul>
+        </header>
+
         {pendingConsultant ? (
           <p className="owner-form-message portal-auth-inline-msg" data-tone="ok" role="status">
-            Your consultant application is awaiting admin approval. Sign in here once
-            approved.
+            {AUTH_LOGIN.pendingNote}
           </p>
         ) : null}
-        <MemberSocialAuth mode="login" />
+        {pendingMember ? (
+          <p className="owner-form-message portal-auth-inline-msg" data-tone="ok" role="status">
+            {AUTH_LOGIN.memberPendingNote}
+          </p>
+        ) : null}
+        {oauthError ? (
+          <p className="owner-form-message portal-auth-inline-msg" data-tone="err" role="alert">
+            {oauthError}
+          </p>
+        ) : null}
+
+        <div className="portal-auth-captcha">
+          <TurnstileWidget onToken={handleCaptchaToken} />
+          {captchaRequired && !captchaOk ? (
+            <p className="portal-auth-captcha-hint">{AUTH_LOGIN.captchaHint}</p>
+          ) : null}
+        </div>
+
+        <MemberSocialAuth
+          mode="login"
+          oauthFromPath="/login"
+          oauth={oauth}
+          captchaToken={captchaToken}
+        />
         <p className="portal-auth-divider">
           <span>Or sign in with email</span>
         </p>
-        <form className="stacked-form" onSubmit={onSubmit}>
+        <form className="stacked-form portal-auth-form" onSubmit={onSubmit}>
           <label>
             Email
-            <input name="email" type="email" autoComplete="username" required />
+            <input
+              name="email"
+              type="email"
+              autoComplete="username"
+              required
+              placeholder="you@example.com"
+            />
           </label>
           <label>
             Password
@@ -104,6 +163,7 @@ export function LoginPageClient() {
               type="password"
               autoComplete="current-password"
               required
+              placeholder="Your password"
             />
           </label>
           {error ? (
@@ -111,25 +171,35 @@ export function LoginPageClient() {
               {error}
             </p>
           ) : null}
-          <button type="submit" disabled={pending}>
-            {pending ? "Signing in..." : "Sign in"}
+          <button
+            type="submit"
+            className="portal-auth-submit"
+            disabled={pending || !captchaOk}
+          >
+            {pending ? "Signing in…" : "Sign in"}
           </button>
         </form>
+
         <p className="portal-auth-alt portal-auth-forgot">
           <Link href="/forgot-password">Forgot password?</Link>
-          <span className="portal-auth-forgot-hint">Recover or reset via email.</span>
         </p>
-        <div className="portal-auth-footer">
-          Need an account?{" "}
-          <Link href="/register/consultant">{CONSULTANT.registerTitle}</Link>
-          <span className="portal-auth-alt">
-            or <Link href="/register/member">{COMMUNITY_MEMBER.registerTitle}</Link>
-          </span>
-          <p className="portal-auth-alt">
-            Staff: use <Link href="/admin/login">Admin login</Link> for the operations
+
+        <footer className="portal-auth-footer">
+          <p className="portal-auth-footer-lead">{AUTH_LOGIN.needAccount}</p>
+          <div className="portal-auth-register-links">
+            <Link href="/register/consultant" className="portal-auth-register-link">
+              {CONSULTANT.registerLink}
+            </Link>
+            <Link href="/register/member" className="portal-auth-register-link">
+              Join as member
+            </Link>
+          </div>
+          <p className="portal-auth-alt portal-auth-staff">
+            {AUTH_LOGIN.staffNote}{" "}
+            <Link href="/admin/login">{AUTH_LOGIN.staffLink}</Link> for the operations
             dashboard.
           </p>
-        </div>
+        </footer>
       </div>
     </main>
   );

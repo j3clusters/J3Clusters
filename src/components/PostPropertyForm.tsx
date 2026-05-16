@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FormEvent, useState } from "react";
 
 export type PostPropertyAccountProfile = {
@@ -9,8 +10,14 @@ export type PostPropertyAccountProfile = {
   city: string;
 };
 
+import type { PropertyFormInitial } from "@/lib/property-form-initial";
+import { CONSULTANT } from "@/lib/consultant-labels";
+
+export type { PropertyFormInitial };
+
 type PostPropertyFormProps = {
   accountProfile?: PostPropertyAccountProfile | null;
+  initial?: PropertyFormInitial | null;
 };
 
 const PROPERTY_TYPES = [
@@ -20,11 +27,18 @@ const PROPERTY_TYPES = [
   { value: "PG", label: "PG", hint: "Shared stays" },
 ] as const;
 
-export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProps) {
-  const [propertyPurpose, setPropertyPurpose] = useState<"Sale" | "Rent" | "">("");
+export function PostPropertyForm({
+  accountProfile = null,
+  initial = null,
+}: PostPropertyFormProps) {
+  const isEdit = Boolean(initial);
+  const [propertyPurpose, setPropertyPurpose] = useState<"Sale" | "Rent" | "">(
+    initial?.purpose ?? "",
+  );
   const [propertyType, setPropertyType] = useState<
     "Apartment" | "Villa" | "Plot" | "PG" | ""
-  >("");
+  >(initial?.type ?? "");
+  const [keptImages, setKeptImages] = useState<string[]>(initial?.imageUrls ?? []);
   const [photoCount, setPhotoCount] = useState(0);
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<{
@@ -52,9 +66,15 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
 
     const form = event.currentTarget;
     const data = new FormData(form);
+    const endpoint = initial?.submissionId
+      ? `/api/submissions/${initial.submissionId}`
+      : initial?.listingId
+        ? `/api/listings/${initial.listingId}/resubmit`
+        : "/api/submissions";
+    const method = isEdit ? "PATCH" : "POST";
     try {
-      const response = await fetch("/api/submissions", {
-        method: "POST",
+      const response = await fetch(endpoint, {
+        method,
         credentials: "same-origin",
         body: data,
       });
@@ -74,19 +94,25 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
               ? firstFieldError
               : typeof payload.error === "string"
                 ? payload.error
-                : "Submit failed.",
+                : isEdit
+                  ? "Save failed."
+                  : "Submit failed.",
           ok: false,
         });
         return;
       }
 
-      form.reset();
-      setPropertyPurpose("");
-      setPropertyType("");
-      setPhotoCount(0);
+      if (!isEdit) {
+        form.reset();
+        setPropertyPurpose("");
+        setPropertyType("");
+        setPhotoCount(0);
+        setKeptImages([]);
+      }
       setFeedback({
-        text:
-          "Received. Your property is queued for verification. It must be approved before it appears publicly. Track status anytime from My properties using the links at the top of this page.",
+        text: isEdit
+          ? "Changes saved. Your listing is off the public site until the team approves the update. Track status on My properties."
+          : "Received. Your property is queued for verification. It must be approved before it appears publicly. Track status anytime from My properties using the links at the top of this page.",
         ok: true,
       });
     } catch {
@@ -99,16 +125,47 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
   return (
     <div className="owner-form-card post-property-form-card">
       <div className="post-property-form-head">
-        <h2>Listing details</h2>
-        <p>Complete each section below. Fields marked with context hints adapt to your property type.</p>
-        <ol className="post-property-form-progress" aria-label="Form sections">
-          <li className="is-done">Contact</li>
-          <li className={propertyType ? "is-done" : propertyPurpose ? "is-active" : ""}>
-            Property
-          </li>
-          <li>Photos</li>
-          <li>Review</li>
-        </ol>
+        {!isEdit ? (
+          <p className="post-property-form-head-eyebrow">New listing form</p>
+        ) : null}
+        <h2>{isEdit ? "Edit listing" : "Listing details"}</h2>
+        <p className="post-property-form-intro">
+          {isEdit
+            ? "Update each section below. After you save, the listing is hidden until J3 Clusters approves your changes."
+            : "Work through all four sections in order. Required fields are marked with * — optional hints update when you change property type (sale/rent, apartment, villa, plot, or PG)."}
+        </p>
+        {!isEdit ? (
+          <ol className="post-property-form-sections-guide" aria-label="Form sections">
+            <li>
+              <span className="post-property-form-sections-guide-num">1</span>
+              <span>
+                <strong>Agent contact</strong>
+                <span>Name, email, phone, and photo for buyers</span>
+              </span>
+            </li>
+            <li>
+              <span className="post-property-form-sections-guide-num">2</span>
+              <span>
+                <strong>Property details</strong>
+                <span>Type, location, price, size, and amenities</span>
+              </span>
+            </li>
+            <li>
+              <span className="post-property-form-sections-guide-num">3</span>
+              <span>
+                <strong>Photos</strong>
+                <span>Up to 13 images — first photo is the cover</span>
+              </span>
+            </li>
+            <li>
+              <span className="post-property-form-sections-guide-num">4</span>
+              <span>
+                <strong>Description &amp; submit</strong>
+                <span>Title, description, then send for review</span>
+              </span>
+            </li>
+          </ol>
+        ) : null}
       </div>
 
       {feedback ? (
@@ -125,7 +182,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
         <section className="owner-form-section" aria-labelledby="post-section-contact">
           <div className="owner-form-section-head">
             <span className="owner-form-step">01</span>
-            <h3 id="post-section-contact">Property consultant contact</h3>
+            <h3 id="post-section-contact">{CONSULTANT.contactSectionLong}</h3>
           </div>
           <div className="owner-form-grid">
             {accountProfile ? (
@@ -135,13 +192,13 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
               </p>
             ) : null}
             <label>
-              Property consultant name
+              {CONSULTANT.name}
               <input
                 name="ownerName"
                 type="text"
                 required
                 placeholder="Full legal name"
-                defaultValue={accountProfile?.name ?? ""}
+                defaultValue={initial?.ownerName ?? accountProfile?.name ?? ""}
                 autoComplete="name"
               />
             </label>
@@ -152,7 +209,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 type="email"
                 required
                 placeholder="you@example.com"
-                defaultValue={accountProfile?.email ?? ""}
+                defaultValue={initial?.ownerEmail ?? accountProfile?.email ?? ""}
                 autoComplete="email"
               />
             </label>
@@ -163,12 +220,12 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 type="tel"
                 required
                 placeholder="+91 …"
-                defaultValue={accountProfile?.phone ?? ""}
+                defaultValue={initial?.ownerPhone ?? accountProfile?.phone ?? ""}
                 autoComplete="tel"
               />
             </label>
             <label className="owner-form-grid-full">
-              Consultant photo <span className="owner-form-optional">(optional)</span>
+              {CONSULTANT.photo} <span className="owner-form-optional">(optional)</span>
               <input name="ownerPhoto" type="file" accept="image/*" />
               <span className="owner-form-hint">
                 JPG, PNG, or WebP — max 4 MB. Shown on the listing next to your name.
@@ -239,7 +296,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 type="text"
                 required
                 placeholder="e.g. Bengaluru"
-                defaultValue={accountProfile?.city ?? ""}
+                defaultValue={initial?.city ?? accountProfile?.city ?? ""}
                 autoComplete="address-level2"
               />
             </label>
@@ -251,6 +308,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 required
                 minLength={5}
                 placeholder="Street, locality, landmark"
+                defaultValue={initial?.address ?? ""}
               />
             </label>
             <label>
@@ -262,6 +320,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                 step={1}
                 placeholder={areaPlaceholder}
                 required
+                defaultValue={initial?.areaSqft ?? undefined}
               />
             </label>
             {requiresRoomDetails ? (
@@ -274,6 +333,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                     min={0}
                     step={1}
                     required={requiresRoomDetails}
+                    defaultValue={initial?.bedrooms ?? undefined}
                   />
                 </label>
                 <label>
@@ -284,6 +344,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                     min={0}
                     step={1}
                     required={requiresRoomDetails}
+                    defaultValue={initial?.bathrooms ?? undefined}
                   />
                 </label>
               </>
@@ -298,6 +359,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                     min={0}
                     step={1}
                     required={requiresBalconyAndParking}
+                    defaultValue={initial?.balconies ?? undefined}
                   />
                 </label>
                 <label>
@@ -308,6 +370,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
                     min={0}
                     step={1}
                     required={requiresBalconyAndParking}
+                    defaultValue={initial?.parkingSpots ?? undefined}
                   />
                 </label>
               </>
@@ -315,7 +378,11 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
             {requiresFurnishing ? (
               <label>
                 Furnishing
-                <select name="furnishing" required={requiresFurnishing} defaultValue="">
+                <select
+                  name="furnishing"
+                  required={requiresFurnishing}
+                  defaultValue={initial?.furnishing ?? ""}
+                >
                   <option value="">Select furnishing</option>
                   <option value="Unfurnished">Unfurnished</option>
                   <option value="SemiFurnished">Semi-furnished</option>
@@ -326,7 +393,13 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
             {requiresRoomDetails ? (
               <label>
                 Property age (years)
-                <input name="propertyAgeYears" type="number" min={0} step={1} />
+                <input
+                  name="propertyAgeYears"
+                  type="number"
+                  min={0}
+                  step={1}
+                  defaultValue={initial?.propertyAgeYears ?? undefined}
+                />
               </label>
             ) : null}
             {isPlot ? (
@@ -341,11 +414,23 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
             ) : null}
             <label>
               Available from
-              <input name="availableFrom" type="date" required />
+              <input
+                name="availableFrom"
+                type="date"
+                required
+                defaultValue={initial?.availableFrom ?? ""}
+              />
             </label>
             <label>
               {priceLabel}
-              <input name="price" type="number" min={0} step={priceStep} required />
+              <input
+                name="price"
+                type="number"
+                min={0}
+                step={priceStep}
+                required
+                defaultValue={initial?.price ?? undefined}
+              />
             </label>
           </div>
         </section>
@@ -356,8 +441,26 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
             <h3 id="post-section-photos">Photos</h3>
           </div>
           <p className="owner-form-hint post-property-photo-intro">
-            Clear, well-lit photos help your listing stand out. Up to 10 images, 8 MB each.
+            {isEdit
+              ? "Keep current photos or upload new ones to replace them. Up to 13 images, 8 MB each."
+              : "Clear, well-lit photos help your listing stand out. Up to 13 images, 8 MB each."}
           </p>
+          {keptImages.length > 0 ? (
+            <ul className="post-property-existing-photos" aria-label="Current photos">
+              {keptImages.map((url) => (
+                <li key={url}>
+                  <Image
+                    src={url}
+                    alt=""
+                    width={120}
+                    height={90}
+                    className="post-property-existing-photo"
+                  />
+                  <input type="hidden" name="existingImages" value={url} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <label className="owner-file-upload">
             <span className="owner-file-upload-panel">
               <span className="owner-file-upload-icon" aria-hidden="true">
@@ -381,8 +484,14 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
               type="file"
               accept="image/*"
               multiple
-              required
-              onChange={(event) => setPhotoCount(event.target.files?.length ?? 0)}
+              required={!isEdit && keptImages.length === 0}
+              onChange={(event) => {
+                const count = event.target.files?.length ?? 0;
+                setPhotoCount(count);
+                if (count > 0) {
+                  setKeptImages([]);
+                }
+              }}
             />
           </label>
         </section>
@@ -400,10 +509,16 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
               required
               minLength={10}
               placeholder="Highlight layout, amenities, nearby landmarks, and what makes this property special…"
+              defaultValue={initial?.description ?? ""}
             />
           </label>
           <label className="owner-legal-confirm">
-            <input name="legalClearance" type="checkbox" required />
+            <input
+              name="legalClearance"
+              type="checkbox"
+              required
+              defaultChecked={initial?.legalClearance ?? false}
+            />
             <span>
               I confirm legal ownership documents are available for verification when
               requested by the J3 Clusters team.
@@ -413,10 +528,18 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
 
         <div className="owner-form-submit post-property-form-submit">
           <p className="post-property-submit-note">
-            By submitting, you agree your details are accurate. We typically review within 1–2 business days.
+            {isEdit
+              ? "Saving will unpublish this listing until an admin approves your changes."
+              : "By submitting, you agree your details are accurate. We typically review within 1–2 business days."}
           </p>
           <button type="submit" disabled={pending}>
-            {pending ? "Submitting…" : "Submit property for review"}
+            {pending
+              ? isEdit
+                ? "Saving…"
+                : "Submitting…"
+              : isEdit
+                ? "Save changes for review"
+                : "Submit property for review"}
           </button>
         </div>
       </form>

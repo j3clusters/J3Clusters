@@ -7,7 +7,7 @@ import { formatPrice } from "@/lib/format";
 export const SITE_NAME = "J3 Clusters";
 
 export const DEFAULT_DESCRIPTION =
-  "Browse verified apartments, villas, plots, and PG rentals across India. J3 Clusters connects buyers and renters with property consultants through transparent listings.";
+  "Browse verified apartments, villas, plots, and PG rentals across India. J3 Clusters connects buyers and renters with property agents through transparent listings.";
 
 export const SITE_KEYWORDS = [
   "property for sale India",
@@ -133,8 +133,8 @@ export function buildListingsMetadata(options: {
     return buildPageMetadata({
       title: city ? `Properties for rent${cityPart}` : "Properties for rent",
       description: city
-        ? `Find rental apartments, villas, and PG stays${cityPart}. Verified consultant listings on J3 Clusters.`
-        : "Find rental apartments, villas, and PG stays. Browse verified listings and connect with consultants.",
+        ? `Find rental apartments, villas, and PG stays${cityPart}. Verified agent listings on J3 Clusters.`
+        : "Find rental apartments, villas, and PG stays. Browse verified listings and connect with agents.",
       path,
       keywords: [
         "property for rent",

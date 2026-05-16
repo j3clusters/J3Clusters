@@ -154,7 +154,7 @@ export function SubmissionReviewModal({
             <div className="edit-modal-body">
               <div className="submission-review-content">
                 <section className="submission-review-section">
-                  <h3>Property consultant</h3>
+                  <h3>Property agent</h3>
                   {submission.ownerPhotoUrl.trim() ? (
                     <div className="submission-review-consultant-photo">
                       <Image
@@ -315,7 +315,7 @@ export function SubmissionReviewModal({
                   className="secondary-btn"
                   title="Reject submission"
                   confirmLabel="Reject"
-                  confirmMessage="Reject this submission? The property consultant will not see it go live."
+                  confirmMessage="Reject this submission? The property agent will not see it go live."
                 >
                   Reject
                 </ConfirmSubmitButton>

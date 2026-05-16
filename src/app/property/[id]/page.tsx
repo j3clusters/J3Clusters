@@ -6,8 +6,10 @@ import { ListingPurpose } from "@prisma/client";
 import { JsonLd } from "@/components/JsonLd";
 import { PropertyCard } from "@/components/PropertyCard";
 import { PropertyDetailFacts } from "@/components/PropertyDetailFacts";
+import { MortgageCalculator } from "@/components/MortgageCalculator";
 import { PropertyDetailMediaColumn } from "@/components/PropertyDetailMediaColumn";
 import { formatPrice } from "@/lib/format";
+import { estimateMonthlyEmi } from "@/lib/mortgage";
 import {
   canViewListingContactDetails,
   redactListingContact,
@@ -38,10 +40,6 @@ export async function generateMetadata({
   return buildPropertyMetadata(listing);
 }
 
-function estimateEmi(price: number) {
-  return Math.round((price * 0.0085) / 1000) * 1000;
-}
-
 function formatPricePerSqft(price: number, areaSqft: number) {
   if (areaSqft <= 0) return null;
   return formatPrice(Math.round(price / areaSqft));
@@ -64,7 +62,7 @@ export default async function PropertyDetailPage({
   const gallery = item.imageUrls.length ? item.imageUrls : [item.image];
   const isRent = item.purpose === "Rent" || item.type === "PG";
   const priceLabel = isRent ? "Monthly rent" : "Price";
-  const emi = !isRent ? estimateEmi(item.price) : null;
+  const emi = !isRent ? estimateMonthlyEmi(item.price) : null;
   const pricePerSqft = formatPricePerSqft(item.price, item.areaSqft);
   const similarRaw = await fetchSimilarListings(
     id,
@@ -93,7 +91,13 @@ export default async function PropertyDetailPage({
     <main className="container section property-detail-page">
       <JsonLd data={[buildListingJsonLd(rawListing), breadcrumbJsonLd]} />
       <article className="property-detail-card">
-        <PropertyDetailMediaColumn item={item} images={gallery} />
+        <PropertyDetailMediaColumn
+          item={item}
+          images={gallery}
+          listingId={id}
+          consultantPhoneOnFile={rawListing.ownerPhone}
+          canViewContact={canViewContact}
+        />
         <div className="property-detail-body">
           <header className="property-detail-header">
               <h1 className="property-detail-title">
@@ -113,19 +117,24 @@ export default async function PropertyDetailPage({
                   </span>
                 ) : null}
                 {emi ? (
-                  <span className="property-detail-emi">
-                    EMI ≈ {formatPrice(emi)}/mo
-                  </span>
+                  <Link
+                    href={`/mortgage-calculator?price=${item.price}`}
+                    className="property-detail-emi"
+                  >
+                    EMI ≈ {formatPrice(emi)}/mo · Calculate
+                  </Link>
                 ) : null}
               </div>
             </header>
 
-          <PropertyDetailFacts
-            item={item}
-            listingId={id}
-            consultantPhoneOnFile={rawListing.ownerPhone}
-            canViewContact={canViewContact}
-          />
+          <PropertyDetailFacts item={item} />
+
+          {!isRent ? (
+            <MortgageCalculator
+              variant="embedded"
+              initialPropertyPrice={item.price}
+            />
+          ) : null}
         </div>
       </article>
 

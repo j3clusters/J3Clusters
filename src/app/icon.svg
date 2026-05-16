@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="J3 Clusters">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="46%" stop-color="#e6f3fc"/>
+      <stop offset="100%" stop-color="#d4e8f8"/>
+    </linearGradient>
+    <radialGradient id="dotBlue" cx="30%" cy="26%" r="70%">
+      <stop offset="0%" stop-color="#6fd4ff"/>
+      <stop offset="30%" stop-color="#00aeff"/>
+      <stop offset="100%" stop-color="#006bb8"/>
+    </radialGradient>
+    <radialGradient id="dotGreen" cx="30%" cy="26%" r="70%">
+      <stop offset="0%" stop-color="#84ee84"/>
+      <stop offset="30%" stop-color="#32cd32"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </radialGradient>
+    <radialGradient id="dotOrange" cx="30%" cy="26%" r="70%">
+      <stop offset="0%" stop-color="#ffc98a"/>
+      <stop offset="30%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#dc2626"/>
+    </radialGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#bg)" stroke="#008cd2" stroke-width="1.25"/>
+  <g id="dot1">
+    <circle cx="16" cy="9.5" r="4.25" fill="url(#dotBlue)" stroke="#fff" stroke-width="0.6"/>
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0;0 -2;0 0"
+      dur="2.8s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+      keyTimes="0;0.5;1"
+    />
+    <animate
+      attributeName="opacity"
+      values="1;0.88;1"
+      dur="2.8s"
+      repeatCount="indefinite"
+    />
+  </g>
+  <g id="dot2">
+    <circle cx="9" cy="21.5" r="4.25" fill="url(#dotGreen)" stroke="#fff" stroke-width="0.6"/>
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0;-1 -1.5;0 0"
+      dur="2.8s"
+      begin="0.35s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+      keyTimes="0;0.5;1"
+    />
+    <animate
+      attributeName="opacity"
+      values="1;0.88;1"
+      dur="2.8s"
+      begin="0.35s"
+      repeatCount="indefinite"
+    />
+  </g>
+  <g id="dot3">
+    <circle cx="23" cy="21.5" r="4.25" fill="url(#dotOrange)" stroke="#fff" stroke-width="0.6"/>
+    <animateTransform
+      attributeName="transform"
+      type="translate"
+      values="0 0;1 -1.5;0 0"
+      dur="2.8s"
+      begin="0.7s"
+      repeatCount="indefinite"
+      calcMode="spline"
+      keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
+      keyTimes="0;0.5;1"
+    />
+    <animate
+      attributeName="opacity"
+      values="1;0.88;1"
+      dur="2.8s"
+      begin="0.7s"
+      repeatCount="indefinite"
+    />
+  </g>
+</svg>

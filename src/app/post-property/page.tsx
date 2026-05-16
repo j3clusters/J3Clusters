@@ -1,64 +1,52 @@
 import Link from "next/link";
-import { OwnerPortalNav } from "@/components/OwnerPortalNav";
+
+import { ConsultantPortfolioHeroPanel } from "@/components/ConsultantPortfolioHeroPanel";
+import { MyPropertiesHeroActions } from "@/components/MyPropertiesHeroActions";
+import { PostPropertyHeroMarquee } from "@/components/PostPropertyHeroMarquee";
 import { PostPropertyForm } from "@/components/PostPropertyForm";
-import { UserLogoutButton } from "@/components/UserLogoutButton";
-import { prisma } from "@/lib/prisma";
+import { CONSULTANT } from "@/lib/consultant-labels";
+import { getConsultantPortfolioSnapshot } from "@/lib/consultant-portfolio-snapshot";
 import { requireConsultant } from "@/lib/require-user";
 
 export default async function PostPropertyPage() {
-  const session = await requireConsultant();
-  const user = await prisma.appUser.findUnique({
-    where: { id: session.sub },
-    select: { name: true, email: true, phone: true, city: true },
-  });
-  const accountProfile = user
-    ? {
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        city: user.city,
-      }
-    : null;
+  const { session, user } = await requireConsultant();
+  const portfolio = await getConsultantPortfolioSnapshot(session.sub, user.email);
+  const accountProfile = {
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    city: user.city,
+  };
 
   return (
     <div className="owner-portal post-property-page">
-      <header className="owner-portal-hero post-property-hero">
-        <div className="container owner-portal-hero-inner">
-          <div className="post-property-hero-copy">
-            <span className="owner-portal-badge">Property consultant portal</span>
+      <header className="mp-hero consultant-portal-hero">
+        <div className="mp-hero-bg" aria-hidden="true">
+          <span className="mp-hero-orb mp-hero-orb--a" />
+          <span className="mp-hero-orb mp-hero-orb--b" />
+        </div>
+        <div className="container mp-hero-inner">
+          <div className="mp-hero-copy">
+            <span className="owner-portal-badge">{CONSULTANT.role}</span>
             <h1>Post your property</h1>
-            <p>
-              Share photos and details once — we review every listing so buyers
-              see accurate, trustworthy homes on J3 Clusters.
-            </p>
-            <p className="owner-portal-highlight">
-              <span className="post-property-hero-pill" aria-hidden="true">
-                Free
-              </span>
-              No listing fees · Verified before publish
-            </p>
-            <ol className="post-property-hero-steps" aria-label="How posting works">
-              <li>
-                <span>1</span>
-                Fill the form
-              </li>
-              <li>
-                <span>2</span>
-                Team review
-              </li>
-              <li>
-                <span>3</span>
-                Go live
-              </li>
-            </ol>
+            <div className="mp-hero-marquee" aria-label="Posting benefits and steps">
+              <div className="post-property-hero-steps-track">
+                <PostPropertyHeroMarquee />
+                <PostPropertyHeroMarquee hidden />
+              </div>
+            </div>
+            <MyPropertiesHeroActions
+              page="post"
+              liveCount={portfolio.liveCount}
+              pendingCount={portfolio.pendingCount}
+            />
           </div>
-          <UserLogoutButton className="secondary-btn portal-btn-ghost" />
+          <ConsultantPortfolioHeroPanel {...portfolio} />
         </div>
       </header>
 
-      <main className="container owner-portal-layout section">
-        <OwnerPortalNav active="post" />
-        <div className="owner-portal-main">
+      <main className="container mp-layout section">
+        <div className="mp-main">
           <div className="owner-portal-cards post-property-benefits">
             <article className="owner-info-card post-property-benefit">
               <span className="post-property-benefit-icon" aria-hidden="true">
@@ -115,7 +103,7 @@ export default async function PostPropertyPage() {
               </span>
               <div>
                 <strong>Rich photos</strong>
-                Upload up to 10 images — we optimize them automatically.
+                Upload up to 13 images — we optimize them automatically.
               </div>
             </article>
           </div>

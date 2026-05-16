@@ -3,12 +3,14 @@ import { createHash, randomBytes } from "crypto";
 export type OAuthState = {
   nonce: string;
   next: string;
+  errorPath?: string;
 };
 
-export function createOAuthState(next: string): OAuthState {
+export function createOAuthState(next: string, errorPath?: string): OAuthState {
   return {
     nonce: randomBytes(24).toString("hex"),
     next,
+    ...(errorPath ? { errorPath } : {}),
   };
 }
 

@@ -38,6 +38,12 @@ function SocialIcon({ id }: { id: SocialNetworkId }) {
           <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.77 1.52V6.76a4.85 4.85 0 0 1-1-.07Z" />
         </svg>
       );
+    case "x":
+      return (
+        <svg {...common}>
+          <path d="M18.244 3H21.5l-7.5 8.573L22.5 21h-6.594l-5.156-6.737L4.75 21H1.5l8.063-9.218L1.5 3h6.75l4.656 6.175L18.244 3Zm-2.313 16.2h1.7L7.82 4.65H6.016l9.915 14.55Z" />
+        </svg>
+      );
     case "youtube":
       return (
         <svg {...common}>
@@ -66,16 +72,19 @@ function networkShortLabel(id: SocialNetworkId): string {
   if (id === "linkedin") return "LinkedIn";
   if (id === "youtube") return "YouTube";
   if (id === "tiktok") return "TikTok";
+  if (id === "x") return "X";
   return id.charAt(0).toUpperCase() + id.slice(1);
 }
 
 type SocialLinksProps = {
-  /** Light icons on the blue footer strip */
-  variant?: "page" | "footer";
+  /** Light icons on the blue footer / header strip */
+  variant?: "page" | "footer" | "header";
   /** Circular icons only (no text labels) */
   iconOnly?: boolean;
   /** Show every platform; inactive ones are hidden when no URL is set */
   showAllPlatforms?: boolean;
+  /** Omit platforms already shown elsewhere (e.g. WhatsApp in the header strip) */
+  excludeIds?: SocialNetworkId[];
   className?: string;
 };
 
@@ -83,33 +92,41 @@ export function SocialLinks({
   variant = "page",
   iconOnly = false,
   showAllPlatforms = false,
+  excludeIds = [],
   className,
 }: SocialLinksProps) {
   const slots = showAllPlatforms ? getSocialPlatformSlots() : null;
   const linkedItems = getSocialNavItems();
+  const excluded = new Set(excludeIds);
 
   const groupClass = [
     "social-links",
-    variant === "footer" ? "social-links--footer" : "social-links--page",
+    variant === "page"
+      ? "social-links--page"
+      : variant === "header"
+        ? "social-links--header"
+        : "social-links--footer",
     iconOnly ? "social-links--icons-only" : "",
     className ?? "",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const entries = showAllPlatforms
-    ? slots!
-        .filter((slot) => slot.href)
-        .map((slot) => ({
-          id: slot.id,
-          label: `J3 Clusters on ${slot.label} (opens in a new tab)`,
-          href: slot.href!,
+  const entries = (
+    showAllPlatforms
+      ? slots!
+          .filter((slot) => slot.href)
+          .map((slot) => ({
+            id: slot.id,
+            label: `J3 Clusters on ${slot.label} (opens in a new tab)`,
+            href: slot.href!,
+          }))
+      : linkedItems.map((item) => ({
+          id: item.id,
+          label: item.label,
+          href: item.href,
         }))
-    : linkedItems.map((item) => ({
-        id: item.id,
-        label: item.label,
-        href: item.href,
-      }));
+  ).filter((item) => !excluded.has(item.id));
 
   if (entries.length === 0) {
     return null;

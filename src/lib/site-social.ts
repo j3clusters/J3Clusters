@@ -13,6 +13,8 @@ const DEFAULT_PUBLIC_EMAIL = "j3clusters@gmail.com";
 const DEFAULT_INSTAGRAM_URL = "https://www.instagram.com/j3_clusters/";
 const DEFAULT_FACEBOOK_URL =
   "https://www.facebook.com/profile.php?id=100092451301908";
+const DEFAULT_TIKTOK_URL = "https://www.tiktok.com/@j3clusters";
+const DEFAULT_X_URL = "https://x.com/J3Clusters";
 const DEFAULT_YOUTUBE_URL =
   "https://www.youtube.com/channel/UCX3jPFtRTYzb6X8SgsxMWog";
 /** J3Clusters on Google Maps (Chennai) — public “write a review” link. */
@@ -48,6 +50,7 @@ export type SocialNetworkId =
   | "facebook"
   | "whatsapp"
   | "tiktok"
+  | "x"
   | "youtube"
   | "linkedin"
   | "google_reviews";
@@ -64,6 +67,7 @@ const SOCIAL_NETWORK_ORDER: SocialNetworkId[] = [
   "facebook",
   "whatsapp",
   "tiktok",
+  "x",
   "youtube",
   "linkedin",
   "google_reviews",
@@ -76,6 +80,7 @@ const SOCIAL_ENV_KEYS: Record<
   instagram: "NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL",
   facebook: "NEXT_PUBLIC_SOCIAL_FACEBOOK_URL",
   tiktok: "NEXT_PUBLIC_SOCIAL_TIKTOK_URL",
+  x: "NEXT_PUBLIC_SOCIAL_X_URL",
   youtube: "NEXT_PUBLIC_SOCIAL_YOUTUBE_URL",
   linkedin: "NEXT_PUBLIC_SOCIAL_LINKEDIN_URL",
   google_reviews: "NEXT_PUBLIC_SOCIAL_GOOGLE_REVIEWS_URL",
@@ -86,6 +91,7 @@ const SOCIAL_DISPLAY_NAMES: Record<SocialNetworkId, string> = {
   facebook: "Facebook",
   whatsapp: "WhatsApp",
   tiktok: "TikTok",
+  x: "X",
   youtube: "YouTube",
   linkedin: "LinkedIn",
   google_reviews: "Google Reviews",
@@ -99,6 +105,8 @@ function resolveSocialHref(id: SocialNetworkId): string | null {
   if (fromEnv) return fromEnv;
   if (id === "instagram") return DEFAULT_INSTAGRAM_URL;
   if (id === "facebook") return DEFAULT_FACEBOOK_URL;
+  if (id === "tiktok") return DEFAULT_TIKTOK_URL;
+  if (id === "x") return DEFAULT_X_URL;
   if (id === "youtube") return DEFAULT_YOUTUBE_URL;
   if (id === "google_reviews") return DEFAULT_GOOGLE_REVIEWS_URL;
   return null;

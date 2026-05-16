@@ -7,7 +7,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata: Metadata = buildPageMetadata({
   title: "Buy & rent verified properties in India",
   description:
-    "Search apartments, villas, plots, and PG stays for sale and rent. Verified consultant listings, transparent pricing, and direct support on J3 Clusters.",
+    "Search apartments, villas, plots, and PG stays for sale and rent. Verified agent listings, transparent pricing, and direct support on J3 Clusters.",
   path: "/",
   keywords: [
     "property marketplace India",
@@ -62,7 +62,7 @@ export default async function HomePage() {
                 </div>
                 <div>
                   <strong>24h</strong>
-                  <span>consultant response target</span>
+                  <span>agent response target</span>
                 </div>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default async function HomePage() {
           </div>
           <div className="trust-strip">
             <span>100% digital inquiry workflow</span>
-            <span>Verified consultant listings</span>
+            <span>Verified agent listings</span>
             <span>Dedicated support team</span>
           </div>
           </div>
@@ -288,7 +288,7 @@ export default async function HomePage() {
             <div>
               <h2 id="home-featured-heading">Featured listings</h2>
               <p className="section-lead">
-                Hand-picked homes from verified consultants — updated live from
+                Hand-picked homes from verified agents — updated live from
                 our catalog.
               </p>
             </div>
@@ -359,7 +359,7 @@ export default async function HomePage() {
               </span>
               <div className="step-card-body">
                 <strong>Close confidently</strong>
-                <p>Connect with property consultants through one streamlined workflow.</p>
+                <p>Connect with property agents through one streamlined workflow.</p>
               </div>
             </article>
           </div>
@@ -390,7 +390,7 @@ export default async function HomePage() {
         <div className="container">
           <div className="cta-banner">
             <div className="cta-banner-content">
-              <p className="cta-banner-badge">Free for property consultants</p>
+              <p className="cta-banner-badge">Free for property agents</p>
               <h2 id="home-cta-heading">Have a property to sell or rent?</h2>
               <p className="cta-banner-copy">
                 List on J3 Clusters with a verified workflow — reach serious
@@ -398,7 +398,7 @@ export default async function HomePage() {
               </p>
               <ul className="cta-banner-points">
                 <li>Free listing submissions</li>
-                <li>Verified consultant profile</li>
+                <li>Verified agent profile</li>
                 <li>Dedicated support team</li>
               </ul>
             </div>

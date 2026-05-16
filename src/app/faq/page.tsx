@@ -8,7 +8,7 @@ import { buildFaqPageJsonLd, buildPageMetadata } from "@/lib/seo";
 export const metadata = buildPageMetadata({
   title: "FAQ",
   description:
-    "Frequently asked questions about browsing properties, memberships, consultants, submissions, privacy, and support on J3 Clusters.",
+    "Frequently asked questions about browsing properties, memberships, agents, submissions, privacy, and support on J3 Clusters.",
   path: "/faq",
 });
 
@@ -16,25 +16,25 @@ const faqStructuredData = [
   {
     question: "What is J3 Clusters?",
     answer:
-      "J3 Clusters is a property marketplace where you can explore verified sale and rental listings published by consultants, with membership features that simplify reaching consultants when you are ready.",
+      "J3 Clusters is a property marketplace where you can explore verified sale and rental listings published by agents, with membership features that simplify reaching agents when you are ready.",
   },
   {
-    question: "What is the difference between a consultant and a community member?",
+    question: "What is the difference between a agent and a community member?",
     answer:
-      "Consultants submit and manage listings after admin review. Community members browse the marketplace and unlock consultant phone numbers on listings when signed in.",
+      "Agents submit and manage listings after admin review. Community members browse the marketplace and unlock agent phone numbers on listings when signed in.",
   },
   {
     question: "How do I register?",
     answer:
-      "Use consultant registration to list properties after approval, or member registration to buy or rent. Visit the registration hub to choose your path.",
+      "Use agent registration to list properties after approval, or member registration to buy or rent. Visit the registration hub to choose your path.",
   },
   {
     question: "Why does a listing show without a phone number until I sign in?",
     answer:
-      "Mobile numbers are revealed to signed-in community members to balance discovery with consultant privacy and reduce automated scraping.",
+      "Mobile numbers are revealed to signed-in community members to balance discovery with agent privacy and reduce automated scraping.",
   },
   {
-    question: "How long does consultant listing approval take?",
+    question: "How long does agent listing approval take?",
     answer:
       "Timing depends on review backlog and submission completeness. Incomplete photos or conflicting details typically delay approval.",
   },
@@ -64,19 +64,19 @@ const faqs: { question: string; answer: ReactNode }[] = [
   {
     question: "What is J3 Clusters?",
     answer:
-      "J3 Clusters is a property marketplace where you can explore verified sale and rental listings published by consultants, with optional membership features that simplify reaching consultants when you’re ready.",
+      "J3 Clusters is a property marketplace where you can explore verified sale and rental listings published by agents, with optional membership features that simplify reaching agents when you’re ready.",
   },
   {
-    question: "What is the difference between a consultant and a community member?",
+    question: "What is the difference between a agent and a community member?",
     answer:
-      "Consultants can submit and manage listings (subject to review and approval before going live). Community members can browse the marketplace and—with an active membership account—unlock consultant phone numbers displayed on listings, without posting inventory themselves.",
+      "Agents can submit and manage listings (subject to review and approval before going live). Community members can browse the marketplace and—with an active membership account—unlock agent phone numbers displayed on listings, without posting inventory themselves.",
   },
   {
     question: "How do I register?",
     answer: (
       <>
         Choose{" "}
-        <Link href="/register/consultant">consultant registration</Link> to list properties
+        <Link href="/register/consultant">agent registration</Link> to list properties
         after sign-in, or{" "}
         <Link href="/register/member">member registration</Link> if you are primarily
         buying or renting. The{" "}
@@ -87,12 +87,12 @@ const faqs: { question: string; answer: ReactNode }[] = [
   {
     question: "Why does a listing show without a phone number until I sign in?",
     answer:
-      "We balance public discovery with consultant privacy. Mobile numbers are revealed to signed-in community members so we can discourage automated scraping while still enabling serious callers to proceed quickly.",
+      "We balance public discovery with agent privacy. Mobile numbers are revealed to signed-in community members so we can discourage automated scraping while still enabling serious callers to proceed quickly.",
   },
   {
-    question: "How long does consultant listing approval take?",
+    question: "How long does agent listing approval take?",
     answer:
-      "Timing depends on backlog and completeness of submission. Incomplete photos or contradictory details typically delay review; use the messaging on submission screens and check your consultant portal for queue status.",
+      "Timing depends on backlog and completeness of submission. Incomplete photos or contradictory details typically delay review; use the messaging on submission screens and check your agent portal for queue status.",
   },
   {
     question: "Can I advertise any property?",
@@ -135,7 +135,7 @@ export default function FaqPage() {
       eyebrow="Help centre"
       intro={
         <p className="site-article-lead">
-          Quick answers about memberships, consultants, listings, privacy, and
+          Quick answers about memberships, agents, listings, privacy, and
           support—plus links to deeper policy pages where needed.
         </p>
       }

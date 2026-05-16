@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Could not complete Facebook sign-in.";
-    return redirectOAuthError(request, message);
+    return redirectOAuthError(request, message, undefined, state);
   }
 
   return completeMemberOAuthSignIn(

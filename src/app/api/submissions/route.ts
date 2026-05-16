@@ -3,14 +3,16 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import sharp from "sharp";
 
+import { AppUserRole } from "@prisma/client";
+
 import { USER_SESSION_COOKIE_NAME, verifyUserJwt } from "@/lib/auth/session";
-import { effectiveAccountRole } from "@/lib/user-session-role";
 import { withListingPurpose } from "@/lib/listing-purpose";
 import { prisma } from "@/lib/prisma";
 import { persistWebpPublicUrl, saveOwnerPortrait } from "@/lib/upload";
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
 import { propertySubmissionSchema } from "@/lib/validators";
 
-const MAX_IMAGES = 10;
+const MAX_IMAGES = MAX_LISTING_IMAGES;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 export async function POST(request: Request) {
@@ -23,9 +25,13 @@ export async function POST(request: Request) {
     );
   }
 
-  if (effectiveAccountRole(session) !== "CONSULTANT") {
+  const account = await prisma.appUser.findUnique({
+    where: { id: session.sub },
+    select: { role: true },
+  });
+  if (!account || account.role !== AppUserRole.CONSULTANT) {
     return NextResponse.json(
-      { error: "Only property consultant accounts can submit listings." },
+      { error: "Only property agent accounts can submit listings." },
       { status: 403 },
     );
   }

@@ -33,9 +33,9 @@ export default function TermsPage() {
 
       <h2>2. Accounts &amp; roles</h2>
       <p>
-        Consultants may publish inventory subject to moderator review prior to—or
+        Property agents may publish inventory subject to moderator review prior to—or
         after—general availability. Community members may browse publicly available
-        content and reveal consultant phone fields where gated by authenticated
+        content and reveal agent phone fields where gated by authenticated
         session state. Administrators maintain operational dashboards separate from
         public accounts. Credentials must remain confidential; you notify us promptly
         of unauthorised use.
@@ -43,7 +43,7 @@ export default function TermsPage() {
 
       <h2>3. Listings, accuracy &amp; compliance</h2>
       <p>
-        Consultants represent that submissions are materially accurate regarding
+        Property agents represent that submissions are materially accurate regarding
         status, lawful authority to advertise, zoning awareness, approvals, occupancy,
         fixtures, defects they know about, and pricing indicative fields. Concealing
         encumbrances, forged documents, or impersonating another brokerage is a
@@ -87,7 +87,7 @@ export default function TermsPage() {
         is&rdquo; and &ldquo;as available&rdquo; without warranties of
         merchantability, fitness for a particular purpose, or non-infringement. We do
         not warrant uninterrupted operation, error-free listings, or that every
-        consultant is licensed in your jurisdiction.
+        agent is licensed in your jurisdiction.
       </p>
 
       <h2>8. Limitation of liability</h2>

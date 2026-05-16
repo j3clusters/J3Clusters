@@ -21,6 +21,17 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const nextConfig: NextConfig = {
+  /** Mirror server OAuth client ids so member social buttons work with GOOGLE_CLIENT_ID / FACEBOOK_APP_ID only. */
+  env: {
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID:
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() ||
+      process.env.GOOGLE_CLIENT_ID?.trim() ||
+      "",
+    NEXT_PUBLIC_FACEBOOK_APP_ID:
+      process.env.NEXT_PUBLIC_FACEBOOK_APP_ID?.trim() ||
+      process.env.FACEBOOK_APP_ID?.trim() ||
+      "",
+  },
   poweredByHeader: false,
   /** Drop console.* in production builds (keeps error / warn for debugging). */
   compiler: {

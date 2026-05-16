@@ -3,22 +3,42 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { COMMUNITY_MEMBER, CONSULTANT } from "@/lib/consultant-labels";
+
 export type AccountRoleParam = "CONSULTANT" | "MEMBER";
 
 type RegisterFormProps = {
   accountRole: AccountRoleParam;
   successRedirect: string;
+  /** Compact grid for community member email registration */
+  variant?: "default" | "member";
 };
 
-export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps) {
+type FeedbackTone = "ok" | "err" | null;
+
+export function RegisterForm({
+  accountRole,
+  successRedirect,
+  variant = "default",
+}: RegisterFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>(null);
   const [pending, setPending] = useState(false);
+
+  const isConsultant = accountRole === "CONSULTANT";
+  const submitLabel = isConsultant
+    ? CONSULTANT.registerSubmit
+    : COMMUNITY_MEMBER.registerSubmit;
+  const submitPendingLabel = isConsultant
+    ? CONSULTANT.registerSubmitPending
+    : COMMUNITY_MEMBER.registerSubmitPending;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
     setMessage(null);
+    setFeedbackTone(null);
 
     const form = event.currentTarget;
     const data = new FormData(form);
@@ -41,6 +61,7 @@ export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
         setMessage(typeof payload.error === "string" ? payload.error : "Registration failed.");
+        setFeedbackTone("err");
         setPending(false);
         return;
       }
@@ -49,69 +70,96 @@ export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps
 
       if (payload.pendingApproval) {
         setMessage(
-          "Registration received. Our team will review your property consultant application. You can sign in after admin approval.",
+          isConsultant
+            ? CONSULTANT.registrationReceived
+            : COMMUNITY_MEMBER.registrationReceived,
         );
+        setFeedbackTone("ok");
         setPending(false);
         return;
       }
 
-      const okDetail =
-        accountRole === "CONSULTANT"
-          ? "You can now post properties as a property consultant."
-          : "You can browse listings and reveal consultant mobile numbers anytime you’re signed in.";
-      setMessage(`Registration successful. ${okDetail}`);
+      setMessage(
+        isConsultant
+          ? `Registration successful. ${CONSULTANT.canPostAfterLogin}`
+          : `Registration successful. ${COMMUNITY_MEMBER.unlockPhone}`,
+      );
+      setFeedbackTone("ok");
       setTimeout(() => router.push(successRedirect), 700);
     } catch {
       setMessage("Network error. Please try again.");
+      setFeedbackTone("err");
     } finally {
       setPending(false);
     }
   }
 
+  const formClass =
+    variant === "member"
+      ? "stacked-form portal-auth-form portal-auth-form--member"
+      : "stacked-form portal-auth-form";
+
   return (
     <>
-      <form className="stacked-form" onSubmit={onSubmit}>
+      <form className={formClass} onSubmit={onSubmit}>
         <label>
-          Full Name
-          <input name="name" type="text" required />
+          Full name
+          <input name="name" type="text" required autoComplete="name" placeholder="Full legal name" />
         </label>
         <label>
           Email
-          <input name="email" type="email" required />
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
         </label>
         <label>
           Phone
-          <input name="phone" type="tel" required />
+          <input name="phone" type="tel" required autoComplete="tel" placeholder="+91 …" />
         </label>
         <label>
           City
-          <input name="city" type="text" required />
+          <input name="city" type="text" required autoComplete="address-level2" placeholder="Your city" />
         </label>
         <label>
           Password
-          <input name="password" type="password" minLength={6} required />
+          <input
+            name="password"
+            type="password"
+            minLength={6}
+            required
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+          />
         </label>
         <label>
           Confirm password
-          <input name="confirmPassword" type="password" minLength={6} required />
+          <input
+            name="confirmPassword"
+            type="password"
+            minLength={6}
+            required
+            autoComplete="new-password"
+            placeholder="Re-enter password"
+          />
         </label>
-        <button type="submit" disabled={pending}>
-          {pending ? "Registering..." : "Register"}
+        {message ? (
+          <p
+            className="owner-form-message"
+            data-tone={feedbackTone ?? "err"}
+            role={feedbackTone === "ok" ? "status" : "alert"}
+            aria-live="polite"
+          >
+            {message}
+          </p>
+        ) : null}
+        <button type="submit" className="portal-auth-submit" disabled={pending}>
+          {pending ? submitPendingLabel : submitLabel}
         </button>
       </form>
-      {message ? (
-        <p
-          className="owner-form-message portal-auth-inline-msg"
-          data-tone={
-            message.includes("successful") || message.includes("received")
-              ? "ok"
-              : "err"
-          }
-          aria-live="polite"
-        >
-          {message}
-        </p>
-      ) : null}
     </>
   );
 }

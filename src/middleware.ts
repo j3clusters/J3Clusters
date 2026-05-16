@@ -6,7 +6,6 @@ import {
   USER_SESSION_COOKIE_NAME,
 } from "@/lib/auth/jwt-cookies";
 import { verifyAdminJwt, verifyUserJwt } from "@/lib/auth/verify-session-token";
-import { effectiveAccountRole } from "@/lib/user-session-role";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -30,9 +29,6 @@ export async function middleware(request: NextRequest) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
       return NextResponse.redirect(login);
-    }
-    if (effectiveAccountRole(session) !== "CONSULTANT") {
-      return NextResponse.redirect(new URL("/community/member", request.url));
     }
     return NextResponse.next();
   }

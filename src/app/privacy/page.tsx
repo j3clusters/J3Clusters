@@ -40,7 +40,7 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Listing-related content</strong> — property narratives, uploads,
-          optional consultant portrait photos supplied with submissions or editing
+          optional agent portrait photos supplied with submissions or editing
           flows.
         </li>
         <li>
@@ -73,7 +73,7 @@ export default function PrivacyPage() {
       <h2>Cookies &amp; similar technologies</h2>
       <p>
         We rely on strictly necessary cookies (for example administrator and
-        consultant session tokens) plus functional cookies where required by our tech
+        agent session tokens) plus functional cookies where required by our tech
         stack. Optional marketing trackers are outside the baseline implementation;
         updates will be surfaced if introduced.
       </p>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
           security vendors under contract.
         </li>
         <li>
-          <strong>Consultant-to-member exposure</strong> — contact details you place
+          <strong>Agent-to-member exposure</strong> — contact details you place
           on live listings can be visible to authenticated community members as
           described in product surface copy.
         </li>

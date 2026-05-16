@@ -19,6 +19,30 @@ export function isGoogleOAuthConfigured(): boolean {
   );
 }
 
+export type GoogleOAuthSetupIssue = "missing_all" | "missing_secret";
+
+export function getGoogleOAuthSetupIssue(): GoogleOAuthSetupIssue | null {
+  const hasId = Boolean(process.env.GOOGLE_CLIENT_ID?.trim());
+  const hasSecret = Boolean(process.env.GOOGLE_CLIENT_SECRET?.trim());
+  if (hasId && hasSecret) {
+    return null;
+  }
+  if (hasId && !hasSecret) {
+    return "missing_secret";
+  }
+  return "missing_all";
+}
+
+/** User-facing message when Google OAuth cannot start. */
+export function googleOAuthSetupErrorMessage(
+  issue: GoogleOAuthSetupIssue | null = getGoogleOAuthSetupIssue(),
+): string {
+  if (issue === "missing_secret") {
+    return "Google client ID is set but GOOGLE_CLIENT_SECRET is missing. Add the GOCSPX client secret to .env.local and restart the dev server.";
+  }
+  return "Google sign-in is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.local.";
+}
+
 export function getGoogleRedirectUri(origin: string): string {
   const base = origin.replace(/\/$/, "");
   return `${base}/api/auth/oauth/google/callback`;

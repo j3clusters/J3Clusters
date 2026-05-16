@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import { ImageUploadField } from "@/components/ImageUploadField";
+import { CONSULTANT } from "@/lib/consultant-labels";
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
 
 type ListingType = "Apartment" | "Villa" | "Plot" | "PG";
 type FurnishingType = "Unfurnished" | "SemiFurnished" | "Furnished";
@@ -44,7 +46,7 @@ export function EditListingFormFields({
   formId,
   formAction,
   defaults,
-  maxImages = 11,
+  maxImages = MAX_LISTING_IMAGES,
 }: ListingFormFieldsProps) {
   const [propertyType, setPropertyType] = useState<ListingType>(defaults.type);
   const [propertyPurpose, setPropertyPurpose] = useState<ListingPurpose>(
@@ -92,10 +94,10 @@ export function EditListingFormFields({
       </fieldset>
 
       <fieldset className="edit-listing-section">
-        <legend>Property consultant contact</legend>
+        <legend>{CONSULTANT.contactSectionLong}</legend>
         <div className="edit-modal-grid">
           <label className="edit-modal-field">
-            <span>Property consultant name</span>
+            <span>{CONSULTANT.name}</span>
             <input
               type="text"
               name="ownerName"
@@ -122,7 +124,7 @@ export function EditListingFormFields({
             />
           </label>
           <label className="edit-modal-field edit-modal-field-full">
-            <span>Consultant photo (optional)</span>
+            <span>{CONSULTANT.photo} (optional)</span>
             {defaults.ownerPhotoUrl.trim() ? (
               <span className="edit-listing-owner-photo-current">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -5,11 +5,17 @@ import {
   ADMIN_SESSION_COOKIE_NAME,
   signAdminJwt,
 } from "@/lib/auth/session";
+import { requireTurnstileForLogin } from "@/lib/auth/turnstile";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const captchaFailure = await requireTurnstileForLogin(request, body);
+    if (captchaFailure) {
+      return captchaFailure;
+    }
+
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password =

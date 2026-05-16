@@ -1,19 +1,23 @@
-import Image from "next/image";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+﻿import Link from "next/link";
 import { ListingStatus, SubmissionStatus } from "@prisma/client";
 
-import { OwnerPortalNav } from "@/components/OwnerPortalNav";
-import { UserLogoutButton } from "@/components/UserLogoutButton";
+import { ConsultantPortfolioHeroPanel } from "@/components/ConsultantPortfolioHeroPanel";
+import { MyPropertiesHeroActions } from "@/components/MyPropertiesHeroActions";
+import { MyPropertiesHeroMarquee } from "@/components/MyPropertiesHeroMarquee";
+import { MyPropertyCard, type MyPropertyStatusTone } from "@/components/MyPropertyCard";
 import { formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { CONSULTANT } from "@/lib/consultant-labels";
 import { requireConsultant } from "@/lib/require-user";
 import { isSubmissionEmailConfigured } from "@/lib/email/submission-status-email";
 
-function submissionStatusLabel(status: SubmissionStatus) {
+function submissionStatusLabel(
+  status: SubmissionStatus,
+  hadLiveListing: boolean,
+) {
   switch (status) {
     case SubmissionStatus.PENDING:
-      return "Pending review";
+      return hadLiveListing ? "Changes pending review" : "Pending review";
     case SubmissionStatus.APPROVED:
       return "Live on site";
     case SubmissionStatus.REJECTED:
@@ -23,7 +27,7 @@ function submissionStatusLabel(status: SubmissionStatus) {
   }
 }
 
-function submissionStatusTone(status: SubmissionStatus): "pending" | "ok" | "err" {
+function submissionStatusTone(status: SubmissionStatus): MyPropertyStatusTone {
   switch (status) {
     case SubmissionStatus.APPROVED:
       return "ok";
@@ -34,15 +38,21 @@ function submissionStatusTone(status: SubmissionStatus): "pending" | "ok" | "err
   }
 }
 
-export default async function MyPropertiesPage() {
-  const session = await requireConsultant();
-  const user = await prisma.appUser.findUnique({
-    where: { id: session.sub },
-    select: { email: true },
+function formatSubmittedDate(date: Date) {
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
-  if (!user) {
-    redirect("/login");
-  }
+}
+
+type PageProps = {
+  searchParams: Promise<{ view?: string }>;
+};
+
+export default async function MyPropertiesPage({ searchParams }: PageProps) {
+  const { view: viewParam } = await searchParams;
+  const { session, user } = await requireConsultant();
 
   const submissions = await prisma.propertySubmission.findMany({
     where: {
@@ -56,31 +66,43 @@ export default async function MyPropertiesPage() {
   });
 
   const submissionIds = submissions.map((s) => s.id);
-  const publishedForSubmission =
+  const linkedListingsForSubmission =
     submissionIds.length === 0
       ? []
       : await prisma.listing.findMany({
-          where: {
-            sourceSubmissionId: { in: submissionIds },
-            status: ListingStatus.PUBLISHED,
-          },
-          select: { id: true, sourceSubmissionId: true },
+          where: { sourceSubmissionId: { in: submissionIds } },
+          select: { id: true, sourceSubmissionId: true, status: true },
         });
 
   const listingIdBySubmission = new Map<string, string>();
-  for (const row of publishedForSubmission) {
-    if (row.sourceSubmissionId) {
+  const submissionIdsWithLinkedListing = new Set<string>();
+  for (const row of linkedListingsForSubmission) {
+    if (!row.sourceSubmissionId) {
+      continue;
+    }
+    submissionIdsWithLinkedListing.add(row.sourceSubmissionId);
+    if (row.status === ListingStatus.PUBLISHED) {
       listingIdBySubmission.set(row.sourceSubmissionId, row.id);
     }
   }
 
   const ownerEmailAlerts = isSubmissionEmailConfigured();
 
-  const legacyLiveListings = await prisma.listing.findMany({
+  const submissionsForDisplay = submissions.filter(
+    (sub) =>
+      sub.status !== SubmissionStatus.APPROVED ||
+      !listingIdBySubmission.has(sub.id),
+  );
+
+  const liveListings = await prisma.listing.findMany({
     where: {
-      ownerEmail: { equals: user.email, mode: "insensitive" },
       status: ListingStatus.PUBLISHED,
-      sourceSubmissionId: null,
+      OR: [
+        { ownerEmail: { equals: user.email, mode: "insensitive" } },
+        ...(submissionIds.length > 0
+          ? [{ sourceSubmissionId: { in: submissionIds } }]
+          : []),
+      ],
     },
     orderBy: { createdAt: "desc" },
     select: {
@@ -92,167 +114,165 @@ export default async function MyPropertiesPage() {
       price: true,
       purpose: true,
       createdAt: true,
+      sourceSubmissionId: true,
     },
   });
 
+  const pendingSubmissions = submissionsForDisplay.filter(
+    (s) => s.status === SubmissionStatus.PENDING,
+  );
+  const pendingCount = pendingSubmissions.length;
+  const liveCount = liveListings.length;
+  const totalCount = submissions.length;
+
+  const view: "live" | "pending" =
+    viewParam === "pending"
+      ? "pending"
+      : viewParam === "live"
+        ? "live"
+        : liveCount > 0
+          ? "live"
+          : "pending";
+  const showLive = view === "live";
+  const showPending = view === "pending";
+
   return (
-    <div className="owner-portal">
-      <header className="owner-portal-hero">
-        <div className="container owner-portal-hero-inner">
-          <div>
-            <span className="owner-portal-badge">Property consultant</span>
+    <div className="owner-portal my-properties-page">
+      <header className="mp-hero consultant-portal-hero">
+        <div className="mp-hero-bg" aria-hidden="true">
+          <span className="mp-hero-orb mp-hero-orb--a" />
+          <span className="mp-hero-orb mp-hero-orb--b" />
+        </div>
+        <div className="container mp-hero-inner">
+          <div className="mp-hero-copy">
+            <span className="owner-portal-badge">{CONSULTANT.role}</span>
             <h1>My properties</h1>
-            <p>
-              Submissions you have sent from this account and anything already
-              published under your contact email.
-            </p>
-            <p className="owner-portal-hero-note">
-              {ownerEmailAlerts ? (
-                <>
-                  When a submission is approved or rejected, we email the
-                  contact details on that submission. This page always shows the
-                  latest status.
-                </>
-              ) : (
-                <>
-                  Automatic email for review decisions is not enabled on this
-                  deployment. Check this page for updates.
-                </>
-              )}
-            </p>
+            <div
+              className="mp-hero-marquee"
+              aria-label="My properties summary"
+            >
+              <div className="post-property-hero-steps-track">
+                <MyPropertiesHeroMarquee />
+                <MyPropertiesHeroMarquee hidden />
+              </div>
+            </div>
+            <MyPropertiesHeroActions
+              page="mine"
+              view={view}
+              liveCount={liveCount}
+              pendingCount={pendingCount}
+            />
           </div>
-          <UserLogoutButton className="secondary-btn portal-btn-ghost" />
+          <ConsultantPortfolioHeroPanel
+            liveCount={liveCount}
+            pendingCount={pendingCount}
+            totalCount={totalCount}
+            ownerEmailAlerts={ownerEmailAlerts}
+          />
         </div>
       </header>
 
-      <main className="container owner-portal-layout section">
-        <OwnerPortalNav active="mine" />
-        <div className="owner-portal-main">
-          <section className="owner-my-section" aria-labelledby="my-submissions-heading">
-            <h2 id="my-submissions-heading" className="owner-my-section-title">
-              Your submissions
-            </h2>
-            {submissions.length === 0 ? (
-              <div className="owner-info-card owner-my-empty">
-                <strong>Nothing here yet</strong>
-                When you post a property while signed in, it will show up here
-                with review status.
-                <p className="owner-my-empty-cta">
-                  <Link href="/post-property" className="card-link">
-                    Post a property →
+      <main className="container mp-layout section">
+        <div className="mp-main">
+          {showLive ? (
+            <section className="mp-section" aria-labelledby="live-listings-heading">
+              <header className="mp-section-head">
+                <div>
+                  <h2 id="live-listings-heading">Live on site</h2>
+                  <p>Published properties buyers can view right now.</p>
+                </div>
+                <span className="mp-section-count">{liveCount}</span>
+              </header>
+              {liveListings.length > 0 ? (
+                <ul className="mp-grid mp-grid--horizontal">
+                  {liveListings.map((listing) => (
+                  <MyPropertyCard
+                    key={listing.id}
+                    variant="live"
+                    image={listing.image}
+                    imageAlt={listing.title}
+                    title={listing.title}
+                    priceLabel={formatPrice(listing.price)}
+                    metaLine={`${listing.type} | ${listing.city} | Published ${formatSubmittedDate(listing.createdAt)}`}
+                    purpose={listing.purpose === "Rent" ? "Rent" : "Sale"}
+                    statusLabel="Live on site"
+                    statusTone="ok"
+                    editHref={
+                      listing.sourceSubmissionId
+                        ? `/my-properties/edit/${listing.sourceSubmissionId}`
+                        : `/my-properties/edit/listing/${listing.id}`
+                    }
+                    viewHref={`/property/${listing.id}`}
+                  />
+                  ))}
+                </ul>
+              ) : (
+                <div className="mp-empty">
+                  <h3>No live listings yet</h3>
+                  <p>
+                    Published properties linked to your account will appear here.
+                  </p>
+                  <Link href="/post-property" className="mp-cta-primary">
+                    Post a property
                   </Link>
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {showPending ? (
+            <section className="mp-section" aria-labelledby="my-submissions-heading">
+            <header className="mp-section-head">
+              <div>
+                <h2 id="my-submissions-heading">Pending review</h2>
+                <p>Submissions waiting for team approval.</p>
+              </div>
+              {pendingCount > 0 ? (
+                <span className="mp-section-count">{pendingCount}</span>
+              ) : null}
+            </header>
+
+            {pendingCount === 0 ? (
+              <div className="mp-empty">
+                <h3>Nothing awaiting review</h3>
+                <p>
+                  When you post a property, it will show here until it is approved.
                 </p>
+                <Link href="/post-property" className="mp-cta-primary">
+                  Post a property
+                </Link>
               </div>
             ) : (
-              <ul className="owner-my-list">
-                {submissions.map((sub) => {
-                  const liveId = listingIdBySubmission.get(sub.id);
+              <ul className="mp-grid mp-grid--horizontal">
+                {pendingSubmissions.map((sub) => {
                   const summary = `${sub.type} in ${sub.city}`;
+                  const purpose = sub.purpose === "Rent" ? "Rent" : "Sale";
+                  const hint = ownerEmailAlerts
+                    ? "We will email the contact on this submission when a decision is made."
+                    : "No automatic email on this site - check back here for updates.";
+
                   return (
-                    <li key={sub.id} className="owner-my-card">
-                      <div className="owner-my-card-image">
-                        <Image
-                          src={sub.imageUrl}
-                          alt={summary}
-                          width={120}
-                          height={90}
-                          className="owner-my-thumb"
-                        />
-                      </div>
-                      <div className="owner-my-card-body">
-                        <div className="owner-my-card-header">
-                          <h3>{summary}</h3>
-                          <span
-                            className="owner-my-status"
-                            data-tone={submissionStatusTone(sub.status)}
-                          >
-                            {submissionStatusLabel(sub.status)}
-                          </span>
-                        </div>
-                        <p className="owner-my-meta">
-                          {sub.purpose === "Rent" ? "Rent" : "Sale"} ·{" "}
-                          {formatPrice(sub.price)} · Submitted{" "}
-                          {sub.createdAt.toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                        <div className="owner-my-card-actions">
-                          {liveId ? (
-                            <Link href={`/property/${liveId}`} className="card-link">
-                              View live listing →
-                            </Link>
-                          ) : sub.status === SubmissionStatus.PENDING ? (
-                            <span className="owner-my-hint">
-                              {ownerEmailAlerts
-                                ? "We email the contact on the submission when a decision is made."
-                                : "No automatic email on this site — check here for updates."}
-                            </span>
-                          ) : sub.status === SubmissionStatus.REJECTED ? (
-                            <span className="owner-my-hint">
-                              Contact support if you need more detail on this
-                              decision.
-                            </span>
-                          ) : (
-                            <span className="owner-my-hint">
-                              Your listing should appear on the site shortly.
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </li>
+                    <MyPropertyCard
+                      key={sub.id}
+                      variant="submission"
+                      image={sub.imageUrl}
+                      imageAlt={summary}
+                      title={summary}
+                      priceLabel={formatPrice(sub.price)}
+                      metaLine={`Submitted ${formatSubmittedDate(sub.createdAt)}`}
+                      purpose={purpose}
+                      statusLabel={submissionStatusLabel(
+                        sub.status,
+                        submissionIdsWithLinkedListing.has(sub.id),
+                      )}
+                      statusTone={submissionStatusTone(sub.status)}
+                      editHref={`/my-properties/edit/${sub.id}`}
+                      hint={hint}
+                    />
                   );
                 })}
               </ul>
             )}
-          </section>
-
-          {legacyLiveListings.length > 0 ? (
-            <section
-              className="owner-my-section"
-              aria-labelledby="legacy-live-heading"
-            >
-              <h2 id="legacy-live-heading" className="owner-my-section-title">
-                Live listings on your email
-              </h2>
-              <p className="owner-my-section-intro">
-                These published properties use your account email but are not
-                linked to a tracked submission (for example, older data).
-              </p>
-              <ul className="owner-my-list">
-                {legacyLiveListings.map((listing) => (
-                  <li key={listing.id} className="owner-my-card">
-                    <div className="owner-my-card-image">
-                      <Image
-                        src={listing.image}
-                        alt={listing.title}
-                        width={120}
-                        height={90}
-                        className="owner-my-thumb"
-                      />
-                    </div>
-                    <div className="owner-my-card-body">
-                      <div className="owner-my-card-header">
-                        <h3>{listing.title}</h3>
-                        <span className="owner-my-status" data-tone="ok">
-                          Live on site
-                        </span>
-                      </div>
-                      <p className="owner-my-meta">
-                        {listing.type} · {listing.city} ·{" "}
-                        {listing.purpose === "Rent" ? "Rent" : "Sale"} ·{" "}
-                        {formatPrice(listing.price)}
-                      </p>
-                      <div className="owner-my-card-actions">
-                        <Link href={`/property/${listing.id}`} className="card-link">
-                          View listing →
-                        </Link>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </section>
           ) : null}
         </div>
@@ -260,3 +280,4 @@ export default async function MyPropertiesPage() {
     </div>
   );
 }
+

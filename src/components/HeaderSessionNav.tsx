@@ -43,9 +43,7 @@ export async function HeaderMainSessionNav() {
     return (
       <>
         <li>
-          <Link href="/post-property" className="primary-nav-cta">
-            Post property
-          </Link>
+          <Link href="/my-properties">My properties</Link>
         </li>
         <li>
           <UserLogoutButton className="header-logout-btn" />
@@ -77,14 +75,6 @@ export async function HeaderMainSessionNav() {
           Login
         </Link>
       </li>
-      <li>
-        <Link
-          href={`/login?next=${encodeURIComponent("/post-property")}`}
-          className="primary-nav-cta"
-        >
-          Post property
-        </Link>
-      </li>
     </>
   );
 }
@@ -98,14 +88,6 @@ export function HeaderMainSessionNavFallback() {
       <li>
         <Link href="/login" className="muted-link">
           Login
-        </Link>
-      </li>
-      <li>
-        <Link
-          href={`/login?next=${encodeURIComponent("/post-property")}`}
-          className="primary-nav-cta"
-        >
-          Post property
         </Link>
       </li>
     </>

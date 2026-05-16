@@ -1,14 +1,30 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useCallback, useState } from "react";
 import Link from "next/link";
+
+import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { isTurnstileConfigured } from "@/lib/auth/turnstile-public";
 
 export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  const captchaRequired = isTurnstileConfigured();
+  const captchaOk = !captchaRequired || Boolean(captchaToken);
+
+  const handleCaptchaToken = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!captchaOk) {
+      setError("Complete the security check before signing in.");
+      return;
+    }
+
     setError(null);
     setPending(true);
     const form = event.currentTarget;
@@ -21,6 +37,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({
           email: String(data.get("email") ?? ""),
           password: String(data.get("password") ?? ""),
+          turnstileToken: captchaToken,
         }),
       });
 
@@ -30,13 +47,12 @@ export default function AdminLoginPage() {
         setError(
           typeof payload.error === "string"
             ? payload.error
-            : "Login failed."
+            : "Login failed.",
         );
         setPending(false);
         return;
       }
 
-      // Full navigation so the Set-Cookie from this response is always sent on the next request.
       window.location.assign("/admin");
     } catch {
       setError("Network error. Try again.");
@@ -56,6 +72,14 @@ export default function AdminLoginPage() {
           </p>
         </div>
         <form className="stacked-form" onSubmit={onSubmit}>
+          <div className="portal-auth-captcha portal-auth-captcha--admin">
+            <TurnstileWidget onToken={handleCaptchaToken} />
+            {captchaRequired && !captchaOk ? (
+              <p className="portal-auth-captcha-hint">
+                Complete the security check to continue.
+              </p>
+            ) : null}
+          </div>
           <label>
             Email
             <input name="email" type="email" autoComplete="username" required />
@@ -70,12 +94,12 @@ export default function AdminLoginPage() {
             />
           </label>
           {error ? <p className="admin-auth-error">{error}</p> : null}
-          <button type="submit" disabled={pending}>
+          <button type="submit" disabled={pending || !captchaOk}>
             {pending ? "Signing in…" : "Enter dashboard"}
           </button>
         </form>
         <div className="admin-auth-back">
-          <Link href="/login">← Consultant login</Link>
+          <Link href="/login">← Agent login</Link>
         </div>
       </div>
     </main>

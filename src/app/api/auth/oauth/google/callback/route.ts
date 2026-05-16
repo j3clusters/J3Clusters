@@ -27,7 +27,12 @@ export async function GET(request: Request) {
   try {
     profile = await exchangeGoogleCode(url.origin, code);
   } catch {
-    return redirectOAuthError(request, "Could not complete Google sign-in.");
+    return redirectOAuthError(
+      request,
+      "Could not complete Google sign-in.",
+      undefined,
+      state,
+    );
   }
 
   return completeMemberOAuthSignIn(request, {

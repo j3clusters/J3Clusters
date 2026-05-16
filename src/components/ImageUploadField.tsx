@@ -7,6 +7,8 @@ import {
   type ChangeEvent,
 } from "react";
 
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
+
 type ImageUploadFieldProps = {
   name: string;
   label: string;
@@ -16,7 +18,7 @@ type ImageUploadFieldProps = {
   maxImages?: number;
 };
 
-const DEFAULT_MAX = 11;
+const DEFAULT_MAX = MAX_LISTING_IMAGES;
 const ACCEPT = "image/jpeg,image/jpg,image/png,image/webp,image/gif,image/avif,image/heic,image/heif";
 
 export function ImageUploadField({

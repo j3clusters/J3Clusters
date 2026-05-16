@@ -262,7 +262,7 @@ export function ListingsView({
     if (mode === "buy") {
       return "Explore verified homes and land for purchase with transparent filters and quick comparison.";
     }
-    return "Discover verified homes similar to leading real-estate marketplaces, with transparent filters and quick comparison.";
+    return "Discover verified homes with transparent filters and quick comparison.";
   }, [mode]);
 
   const purposeVariant = useMemo((): "buy" | "rent" | "any" => {
@@ -285,233 +285,363 @@ export function ListingsView({
     return "All listings";
   }, [purposeVariant]);
 
-  const filtersToolbarHint = useMemo(() => {
-    if (purposeVariant === "rent") {
-      return "Rental inventory updates as you change filters below.";
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (purposeRoute === "listings" && mode) {
+      count += 1;
     }
-    if (purposeVariant === "buy") {
-      return "Sale inventory updates as you change filters below.";
+    if (type) {
+      count += 1;
     }
-    return "Filters apply instantly once listings load.";
-  }, [purposeVariant]);
+    if (city.trim()) {
+      count += 1;
+    }
+    if (minBudget) {
+      count += 1;
+    }
+    if (maxBudget) {
+      count += 1;
+    }
+    if (sort && sort !== "newest") {
+      count += 1;
+    }
+    return count;
+  }, [purposeRoute, mode, type, city, minBudget, maxBudget, sort]);
+
+  const cityOptions = useMemo(() => {
+    return Array.from(new Set(items.map((item) => item.city))).sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [items]);
 
   return (
     <main
-      className={`listings-page container section listings-page--${purposeVariant}`}
+      className={`listings-page listings-page--${purposeVariant}`}
       data-listing-purpose={purposeVariant}
     >
-      <header className="listings-hero">
-        <span className="listings-purpose-pill">{purposePillLabel}</span>
-        <div className="section-head listings-section-head">
-          <h1>{listingsHeading}</h1>
-          <p>{listingsResultLine}</p>
-        </div>
-        <p className="meta listings-hero-intro">{listingsIntro}</p>
-      </header>
-
-      <div className="listing-layout">
-        <aside className="listing-sidebar">
-          <h3>Filters</h3>
-          <div className="filters-vertical">
-            <label>
-              Purpose
-              <select
-                value={mode}
-                onChange={(event) => handlePurposeChange(event.target.value)}
-              >
-                <option value="">Any</option>
-                <option value="buy">Buy</option>
-                <option value="rent">Rent</option>
-              </select>
-            </label>
-            <label>
-              Type
-              <select value={type} onChange={(event) => setType(event.target.value)}>
-                <option value="">Any</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="Plot">Plot</option>
-                <option value="PG">PG</option>
-              </select>
-            </label>
-            <label>
-              City
-              <input
-                type="text"
-                placeholder="City name"
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-              />
-            </label>
-            <label>
-              Min Budget (INR)
-              <input
-                type="number"
-                min={0}
-                step={100_000}
-                value={minBudget}
-                onChange={(event) => setMinBudget(event.target.value)}
-              />
-            </label>
-            <label>
-              Max Budget (INR)
-              <input
-                type="number"
-                min={0}
-                step={100_000}
-                value={maxBudget}
-                onChange={(event) => setMaxBudget(event.target.value)}
-              />
-            </label>
-            <button type="button" className="secondary-btn" onClick={clearFilters}>
-              Clear filters
-            </button>
-          </div>
-        </aside>
-        <section>
-          <div className="filters-toolbar">
-            <span>{filtersToolbarHint}</span>
-            <label className="sort-inline">
-              Sort
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                <option value="newest">Newest</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="list-card-grid">
-            {pagedItems.map((item) => (
-              <PropertyCard
-                key={item.id}
-                item={item}
-                variant="list"
-                compareSlot={
-                  <label className="compare-check">
-                    <input
-                      type="checkbox"
-                      checked={compareIds.includes(item.id)}
-                      disabled={compareDisabled && !compareIds.includes(item.id)}
-                      onChange={() => toggleCompare(item.id)}
-                    />
-                    Compare this property
-                  </label>
-                }
-              />
-            ))}
-          </div>
-          {filtered.length === 0 ? (
-            <p className="home-empty-note listings-empty-note">
-              {items.length === 0
-                ? mode === "rent"
-                  ? "No rental listings are available yet. Browse properties for sale or check back soon."
-                  : "No published listings yet. Check back soon or list a property as a consultant."
-                : "No properties match these filters. Try clearing filters or browse all listings."}
-              {items.length > 0 ? (
-                <>
-                  {" "}
-                  <button type="button" className="listings-clear-link" onClick={clearFilters}>
-                    Clear filters
-                  </button>
-                </>
-              ) : null}
-            </p>
-          ) : null}
-          {filtered.length > 0 ? (
-            <div className="pagination-row">
+      <div className="listings-page-bg" aria-hidden="true" />
+      <div className="container listings-page-inner">
+        <header className="listings-hero">
+          <div className="listings-hero-top">
+            <span className="listings-purpose-pill">{purposePillLabel}</span>
+            <div className="listings-purpose-tabs" role="tablist" aria-label="Listing purpose">
               <button
                 type="button"
-                className="secondary-btn"
-                disabled={safePage <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                role="tab"
+                aria-selected={mode === ""}
+                className={`listings-purpose-tab${mode === "" ? " is-active" : ""}`}
+                onClick={() => handlePurposeChange("")}
               >
-                Previous
+                All
               </button>
-              <span>
-                Page {safePage} of {totalPages}
-              </span>
               <button
                 type="button"
-                className="secondary-btn"
-                disabled={safePage >= totalPages}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
+                role="tab"
+                aria-selected={mode === "buy"}
+                className={`listings-purpose-tab${mode === "buy" ? " is-active" : ""}`}
+                onClick={() => handlePurposeChange("buy")}
               >
-                Next
+                Buy
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mode === "rent"}
+                className={`listings-purpose-tab${mode === "rent" ? " is-active" : ""}`}
+                onClick={() => handlePurposeChange("rent")}
+              >
+                Rent
               </button>
             </div>
-          ) : null}
-        </section>
-      </div>
-      {compareItems.length > 0 ? (
-        <div className="compare-bar">
-          <div className="compare-pill-row">
-            {compareItems.map((item) => (
+          </div>
+          <div className="listings-hero-main">
+            <div className="listings-hero-copy">
+              <h1>{listingsHeading}</h1>
+              <p className="listings-hero-intro">{listingsIntro}</p>
+            </div>
+            <div className="listings-hero-stats" aria-label="Search summary">
+              <div className="listings-stat-card">
+                <strong>{filtered.length}</strong>
+                <span>matching homes</span>
+              </div>
+              <div className="listings-stat-card">
+                <strong>{itemsForPurpose.length}</strong>
+                <span>in this category</span>
+              </div>
+              <div className="listings-stat-card">
+                <strong>{cityOptions.length}</strong>
+                <span>cities covered</span>
+              </div>
+            </div>
+          </div>
+          <div className="listings-type-chips" aria-label="Quick property types">
+            {["Apartment", "Villa", "Plot", "PG"].map((propertyType) => (
               <button
-                key={item.id}
+                key={propertyType}
                 type="button"
-                className="compare-pill"
-                onClick={() => removeCompare(item.id)}
+                className={`listings-type-chip${type === propertyType ? " is-active" : ""}`}
+                onClick={() =>
+                  setType((current) =>
+                    current === propertyType ? "" : propertyType,
+                  )
+                }
               >
-                {item.title} ✕
+                {propertyType}
               </button>
             ))}
           </div>
-          <div className="compare-bar-actions">
-            <span>{compareItems.length}/3 selected</span>
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={() => setCompareIds([])}
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowComparePanel((current) => !current)}
-            >
-              {showComparePanel ? "Hide compare" : "Compare now"}
-            </button>
-          </div>
+        </header>
+
+        <div className="listing-layout">
+          <aside className="listing-sidebar listings-filters-panel">
+            <div className="listings-filters-head">
+              <h2>Refine search</h2>
+              <p>Adjust filters — results update instantly.</p>
+            </div>
+            <div className="filters-vertical listings-filters-form">
+              {purposeRoute === "listings" ? (
+                <label className="listings-filter-field">
+                  <span className="listings-filter-label">Purpose</span>
+                  <select
+                    value={mode}
+                    onChange={(event) => handlePurposeChange(event.target.value)}
+                  >
+                    <option value="">Any</option>
+                    <option value="buy">Buy</option>
+                    <option value="rent">Rent</option>
+                  </select>
+                </label>
+              ) : null}
+              <label className="listings-filter-field">
+                <span className="listings-filter-label">Property type</span>
+                <select value={type} onChange={(event) => setType(event.target.value)}>
+                  <option value="">Any type</option>
+                  <option value="Apartment">Apartment</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Plot">Plot</option>
+                  <option value="PG">PG</option>
+                </select>
+              </label>
+              <label className="listings-filter-field">
+                <span className="listings-filter-label">City</span>
+                <input
+                  type="text"
+                  placeholder="e.g. Chennai"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  list="listings-city-suggestions"
+                />
+                <datalist id="listings-city-suggestions">
+                  {cityOptions.map((option) => (
+                    <option key={option} value={option} />
+                  ))}
+                </datalist>
+              </label>
+              <label className="listings-filter-field">
+                <span className="listings-filter-label">Min budget (₹)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={100_000}
+                  placeholder="No minimum"
+                  value={minBudget}
+                  onChange={(event) => setMinBudget(event.target.value)}
+                />
+              </label>
+              <label className="listings-filter-field">
+                <span className="listings-filter-label">Max budget (₹)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={100_000}
+                  placeholder="No maximum"
+                  value={maxBudget}
+                  onChange={(event) => setMaxBudget(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="secondary-btn listings-filters-clear"
+                onClick={clearFilters}
+                disabled={activeFilterCount === 0}
+              >
+                Clear all filters
+              </button>
+            </div>
+          </aside>
+
+          <section className="listings-results">
+            <div className="listings-toolbar">
+              <div className="listings-toolbar-left">
+                <p className="listings-results-count">{listingsResultLine}</p>
+                {activeFilterCount > 0 ? (
+                  <span className="listings-filter-badge">
+                    {activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} active
+                  </span>
+                ) : null}
+              </div>
+              <label className="listings-sort">
+                <span className="listings-sort-label">Sort by</span>
+                <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                  <option value="newest">Newest first</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                </select>
+              </label>
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className="listings-empty-state">
+                <div className="listings-empty-icon" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="32"
+                    height="32"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  >
+                    <path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5Z" />
+                    <path d="M9 21v-6h6v6" />
+                  </svg>
+                </div>
+                <h2>No properties found</h2>
+                <p>
+                  {items.length === 0
+                    ? mode === "rent"
+                      ? "No rental listings are available yet. Browse properties for sale or check back soon."
+                      : "No published listings yet. Check back soon or list a property as an agent."
+                    : "Nothing matches these filters. Try a different city, budget, or property type."}
+                </p>
+                {items.length > 0 ? (
+                  <button type="button" className="secondary-btn" onClick={clearFilters}>
+                    Reset filters
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <div className="listings-results-grid">
+                  {pagedItems.map((item) => (
+                    <PropertyCard
+                      key={item.id}
+                      item={item}
+                      variant="grid"
+                      compareSlot={
+                        <label className="compare-check listings-compare-check">
+                          <input
+                            type="checkbox"
+                            checked={compareIds.includes(item.id)}
+                            disabled={
+                              compareDisabled && !compareIds.includes(item.id)
+                            }
+                            onChange={() => toggleCompare(item.id)}
+                          />
+                          Compare
+                        </label>
+                      }
+                    />
+                  ))}
+                </div>
+                <nav className="listings-pagination" aria-label="Listings pages">
+                  <button
+                    type="button"
+                    className="secondary-btn listings-page-btn"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  >
+                    ← Previous
+                  </button>
+                  <div className="listings-page-indicator">
+                    <span className="listings-page-current">{safePage}</span>
+                    <span className="listings-page-sep">/</span>
+                    <span className="listings-page-total">{totalPages}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="secondary-btn listings-page-btn"
+                    disabled={safePage >= totalPages}
+                    onClick={() =>
+                      setPage((current) => Math.min(totalPages, current + 1))
+                    }
+                  >
+                    Next →
+                  </button>
+                </nav>
+              </>
+            )}
+          </section>
         </div>
-      ) : null}
-      {showComparePanel && compareItems.length > 0 ? (
-        <section className="compare-panel">
-          <div className="section-head" style={{ marginBottom: "0.6rem" }}>
-            <h2>Property comparison</h2>
-            <span className="meta">Compare up to 3 properties</span>
+
+        {compareItems.length > 0 ? (
+          <div className="compare-bar">
+            <div className="compare-pill-row">
+              {compareItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="compare-pill"
+                  onClick={() => removeCompare(item.id)}
+                >
+                  {item.title} ✕
+                </button>
+              ))}
+            </div>
+            <div className="compare-bar-actions">
+              <span>{compareItems.length}/3 selected</span>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => setCompareIds([])}
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowComparePanel((current) => !current)}
+              >
+                {showComparePanel ? "Hide compare" : "Compare now"}
+              </button>
+            </div>
           </div>
-          <div className="compare-grid">
-            {compareItems.map((item) => (
-              <article key={item.id} className="compare-card">
-                <h3>{item.title}</h3>
-                <p className="meta">{item.city}</p>
-                <ul>
-                  <li>
-                    <strong>Type:</strong> {item.type}
-                  </li>
-                  <li>
-                    <strong>Price:</strong> {item.price.toLocaleString("en-IN")}
-                  </li>
-                  <li>
-                    <strong>Area:</strong> {item.areaSqft} sqft
-                  </li>
-                  <li>
-                    <strong>
-                      {item.type === "PG" ? "Stay type:" : "Beds/Baths:"}
-                    </strong>{" "}
-                    {item.type === "PG"
-                      ? "Managed PG"
-                      : `${item.beds}/${item.baths}`}
-                  </li>
-                </ul>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
+        ) : null}
+
+        {showComparePanel && compareItems.length > 0 ? (
+          <section className="compare-panel listings-compare-panel">
+            <div className="listings-compare-head">
+              <h2>Property comparison</h2>
+              <span>Compare up to 3 properties side by side</span>
+            </div>
+            <div className="compare-grid">
+              {compareItems.map((item) => (
+                <article key={item.id} className="compare-card">
+                  <h3>{item.title}</h3>
+                  <p className="meta">{item.city}</p>
+                  <ul>
+                    <li>
+                      <strong>Type:</strong> {item.type}
+                    </li>
+                    <li>
+                      <strong>Price:</strong> {item.price.toLocaleString("en-IN")}
+                    </li>
+                    <li>
+                      <strong>Area:</strong> {item.areaSqft} sqft
+                    </li>
+                    <li>
+                      <strong>
+                        {item.type === "PG" ? "Stay type:" : "Beds/Baths:"}
+                      </strong>{" "}
+                      {item.type === "PG"
+                        ? "Managed PG"
+                        : `${item.beds}/${item.baths}`}
+                    </li>
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
     </main>
   );
 }

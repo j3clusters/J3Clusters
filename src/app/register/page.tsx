@@ -6,7 +6,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata = buildPageMetadata({
   title: "Create an account",
   description:
-    "Register as a property consultant to list homes after admin approval, or join as a community member to browse and unlock consultant contacts.",
+    "Register as a property agent to list homes after admin approval, or join as a community member to view agent mobile numbers after sign-in.",
   path: "/register",
 });
 
@@ -18,8 +18,8 @@ export default function RegisterHubPage() {
           <p className="pill">Join J3 Clusters</p>
           <h1>Choose how you want to participate</h1>
           <p className="community-page-lead">
-            Consultants list and manage properties. Community members unlock
-            consultant contact details while they search.
+            Agents list and manage properties. Community members unlock
+            agent contact details while they search.
           </p>
         </header>
 
@@ -30,7 +30,7 @@ export default function RegisterHubPage() {
             <p className="register-hub-desc">{CONSULTANT.registerSub}</p>
             <div className="register-hub-actions">
               <Link href="/register/consultant" className="primary-nav-cta">
-                Register as consultant
+                Register as agent
               </Link>
             </div>
           </section>
@@ -41,7 +41,7 @@ export default function RegisterHubPage() {
             <p className="register-hub-desc">{COMMUNITY_MEMBER.registerSub}</p>
             <div className="register-hub-actions">
               <Link href="/register/member" className="primary-nav-cta">
-                Register as member
+                Join with Google or Facebook
               </Link>
               <Link href="/community/member">About the member community</Link>
             </div>

@@ -5,6 +5,7 @@ import {
   canSignInWithPassword,
   loginBlockedMessage,
 } from "@/lib/app-user-account";
+import { requireTurnstileForLogin } from "@/lib/auth/turnstile";
 import {
   signUserJwt,
   USER_SESSION_COOKIE_NAME,
@@ -14,6 +15,11 @@ import { prisma } from "@/lib/prisma";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const captchaFailure = await requireTurnstileForLogin(request, body);
+    if (captchaFailure) {
+      return captchaFailure;
+    }
+
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const password =
@@ -63,7 +69,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const blocked = loginBlockedMessage(user.accountStatus);
+    const blocked = loginBlockedMessage(user.accountStatus, user.role);
     if (blocked) {
       return NextResponse.json({ error: blocked }, { status: 403 });
     }
@@ -93,7 +99,15 @@ export async function POST(request: Request) {
       secure: process.env.NODE_ENV === "production",
     });
     return response;
-  } catch {
-    return NextResponse.json({ error: "Login failed." }, { status: 500 });
+  } catch (err) {
+    console.error("[user-login]", err);
+    const message =
+      err instanceof Error &&
+      (err.message.includes("accountStatus") ||
+        err.message.includes("Authentication failed") ||
+        err.message.includes("connect"))
+        ? "Login is temporarily unavailable. The database needs to be updated — run npm run db:sync, then try again."
+        : "Login failed.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

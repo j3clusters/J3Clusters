@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { formatPrice } from "@/lib/format";
+import { estimateMonthlyEmi } from "@/lib/mortgage";
 import { listingPurposeFor } from "@/lib/listing-purpose";
 import type { Listing } from "@/types/listing";
 
@@ -11,10 +12,6 @@ type PropertyCardProps = {
   compareSlot?: React.ReactNode;
 };
 
-function estimateEmi(price: number) {
-  return Math.round((price * 0.0085) / 1000) * 1000;
-}
-
 export function PropertyCard({
   item,
   variant = "grid",
@@ -23,7 +20,7 @@ export function PropertyCard({
   const listMode = variant === "list";
   const purpose = listingPurposeFor(item);
   const isRent = purpose === "Rent";
-  const emi = estimateEmi(item.price);
+  const emi = estimateMonthlyEmi(item.price);
   const summaryLine =
     item.type === "Plot"
       ? `${item.areaSqft} sqft plot area`

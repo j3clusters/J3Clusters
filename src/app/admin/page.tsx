@@ -22,6 +22,7 @@ import {
   submissionStatusLabel,
   submissionStatusTone,
 } from "@/lib/listing-labels";
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
 import {
   listingPurposeFor,
   stripListingPurpose,
@@ -31,6 +32,7 @@ import { requireAdmin } from "@/lib/require-admin";
 
 import {
   approveConsultantAction,
+  approveMemberAction,
   approveSubmissionAction,
   bulkSubmissionAction,
   deleteContactLeadAction,
@@ -43,6 +45,7 @@ import {
   permanentlyDeleteListingAction,
   permanentlyDeleteSubmissionAction,
   rejectConsultantAction,
+  rejectMemberAction,
   rejectSubmissionAction,
   restoreContactLeadAction,
   restoreListingAction,
@@ -195,6 +198,7 @@ export default async function AdminDashboardPage(props: PageProps) {
     recycledLeads,
     auditLogs,
     pendingConsultants,
+    pendingMembers,
   ] = await Promise.all([
     prisma.propertySubmission.findMany({
       where: submissionWhere,
@@ -251,6 +255,14 @@ export default async function AdminDashboardPage(props: PageProps) {
     prisma.appUser.findMany({
       where: {
         role: AppUserRole.CONSULTANT,
+        accountStatus: AppUserAccountStatus.PENDING,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
+    prisma.appUser.findMany({
+      where: {
+        role: AppUserRole.MEMBER,
         accountStatus: AppUserAccountStatus.PENDING,
       },
       orderBy: { createdAt: "desc" },
@@ -357,8 +369,12 @@ export default async function AdminDashboardPage(props: PageProps) {
       </header>
         <div className="container admin-quick-nav-wrap">
           <nav className="admin-quick-nav" aria-label="Jump to section">
+            <a href="#members">
+              Members
+              {pendingMembers.length > 0 ? ` (${pendingMembers.length})` : ""}
+            </a>
             <a href="#consultants">
-              Consultants
+              Agents
               {pendingConsultants.length > 0
                 ? ` (${pendingConsultants.length})`
                 : ""}
@@ -408,19 +424,76 @@ export default async function AdminDashboardPage(props: PageProps) {
           </div>
         </div>
 
+      <section id="members" className="admin-panel admin-panel-members">
+        <div className="admin-panel-head">
+          <h2 className="admin-panel-title">Community member registrations</h2>
+          <span className="admin-panel-chip">
+            {pendingMembers.length} awaiting approval
+          </span>
+        </div>
+        <p className="admin-panel-desc">
+          Email registrations stay <strong>PENDING</strong> until you approve them.
+          Approved members can sign in and view agent mobile numbers on listings.
+          Social sign-in (Google/Facebook) is approved automatically.
+        </p>
+        {pendingMembers.length === 0 ? (
+          <p className="admin-empty-hint">No member registrations waiting for approval.</p>
+        ) : (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>City</th>
+                  <th>Registered</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingMembers.map((member) => (
+                  <tr key={member.id}>
+                    <td>{member.name}</td>
+                    <td>{member.email}</td>
+                    <td>{member.phone}</td>
+                    <td>{member.city}</td>
+                    <td>{formatUtc(member.createdAt)}</td>
+                    <td>
+                      <div className="admin-action-stack">
+                        <form action={approveMemberAction.bind(null, member.id)}>
+                          <button type="submit" className="secondary-btn">
+                            Approve
+                          </button>
+                        </form>
+                        <form action={rejectMemberAction.bind(null, member.id)}>
+                          <button type="submit" className="secondary-btn danger-btn">
+                            Reject
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       <section id="consultants" className="admin-panel admin-panel-consultants">
         <div className="admin-panel-head">
-          <h2 className="admin-panel-title">Property consultant registrations</h2>
+          <h2 className="admin-panel-title">Property agent registrations</h2>
           <span className="admin-panel-chip">
             {pendingConsultants.length} awaiting approval
           </span>
         </div>
         <p className="admin-panel-desc">
-          New property consultant (owner) accounts stay <strong>PENDING</strong> until
-          you approve them. Approved consultants can sign in and post listings.
+          New property agent (owner) accounts stay <strong>PENDING</strong> until
+          you approve them. Approved agents can sign in and post listings.
         </p>
         {pendingConsultants.length === 0 ? (
-          <p className="admin-empty-hint">No consultant registrations waiting for approval.</p>
+          <p className="admin-empty-hint">No agent registrations waiting for approval.</p>
         ) : (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -479,7 +552,7 @@ export default async function AdminDashboardPage(props: PageProps) {
           <input
             type="text"
             name="q"
-            placeholder="Search consultant, city, email, or phone"
+            placeholder="Search agent, city, email, or phone"
             defaultValue={searchText}
           />
           <select name="status" defaultValue={activeStatus}>
@@ -532,7 +605,7 @@ export default async function AdminDashboardPage(props: PageProps) {
               <tr>
                 <th className="admin-th">Select</th>
                 <th className="admin-th">When</th>
-                <th className="admin-th">Consultant</th>
+                <th className="admin-th">Agent</th>
                 <th className="admin-th">Type</th>
                 <th className="admin-th">Purpose</th>
                 <th className="admin-th">City</th>
@@ -562,7 +635,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                         className="secondary-btn"
                         title="Reject submissions"
                         confirmLabel="Reject"
-                        confirmMessage="Reject all selected submissions? Consultants will not see these go live."
+                        confirmMessage="Reject all selected submissions? Agents will not see these go live."
                       >
                         Bulk reject
                       </ConfirmSubmitButton>
@@ -734,7 +807,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                             className="secondary-btn"
                             title="Reject submission"
                             confirmLabel="Reject"
-                            confirmMessage="Reject this submission? The consultant will not see it go live."
+                            confirmMessage="Reject this submission? The agent will not see it go live."
                           >
                             Reject
                           </ConfirmSubmitButton>
@@ -777,7 +850,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                                   ? submission.imageUrls
                                   : [submission.imageUrl],
                             }}
-                            maxImages={10}
+                            maxImages={MAX_LISTING_IMAGES}
                           />
                         </EditModal>
                         <form
@@ -1021,7 +1094,7 @@ export default async function AdminDashboardPage(props: PageProps) {
                                 ? listing.imageUrls
                                 : [listing.image],
                           }}
-                          maxImages={11}
+                          maxImages={MAX_LISTING_IMAGES}
                         />
                       </EditModal>
                       <form action={deleteListingAction.bind(null, listing.id)}>

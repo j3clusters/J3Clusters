@@ -57,6 +57,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${base}/mortgage-calculator`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.55,
+    },
+    {
       url: `${base}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",

@@ -7,10 +7,12 @@ import crypto from "node:crypto";
 
 import sharp from "sharp";
 
+import { MAX_LISTING_IMAGES } from "@/lib/listing-image-limits";
+
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 const PUBLIC_PREFIX = "/uploads";
 
-export const MAX_IMAGES = 11;
+export const MAX_IMAGES = MAX_LISTING_IMAGES;
 export const MAX_BYTES_PER_FILE = 12 * 1024 * 1024;
 const MAX_DIMENSION = 1920;
 const WEBP_QUALITY = 82;

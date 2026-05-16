@@ -33,6 +33,17 @@ export function consultantRedirectAfterLogin(nextParam: string | null): string {
   return "/post-property";
 }
 
+const OAUTH_ERROR_RETURN_PATHS = ["/login", "/register/member"] as const;
+
+/** Where to send the user when OAuth fails (register/member or login only). */
+export function oauthErrorReturnPath(from: string | null | undefined): string {
+  const path = parseSafeNextPath(from);
+  if (path && OAUTH_ERROR_RETURN_PATHS.includes(path as (typeof OAUTH_ERROR_RETURN_PATHS)[number])) {
+    return path;
+  }
+  return "/login";
+}
+
 /** Member login destination. */
 export function memberRedirectAfterLogin(nextParam: string | null): string {
   const next = parseSafeNextPath(nextParam);
