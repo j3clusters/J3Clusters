@@ -81,6 +81,7 @@ const main = async () => {
       city: "Dubai",
       password: smokePassword,
       confirmPassword: smokePassword,
+      accountRole: "CONSULTANT",
     }),
   });
   results.push(`POST /api/register => ${register.status}`);
@@ -164,7 +165,15 @@ const main = async () => {
     ["/listings/rent", "GET /listings/rent"],
     ["/login", "GET /login"],
     ["/register", "GET /register"],
+    ["/register/consultant", "GET /register/consultant"],
+    ["/register/member", "GET /register/member"],
+    ["/community/consultant", "GET /community/consultant"],
+    ["/community/member", "GET /community/member"],
     ["/contact", "GET /contact"],
+    ["/about", "GET /about"],
+    ["/faq", "GET /faq"],
+    ["/privacy", "GET /privacy"],
+    ["/terms", "GET /terms"],
     ["/forgot-password", "GET /forgot-password"],
     ["/reset-password?token=x", "GET /reset-password"],
     ["/post-property", "GET /post-property (expect 307/308 if unauthenticated)"],

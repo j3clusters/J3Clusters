@@ -139,7 +139,7 @@ export default async function HomePage() {
               Buy
             </Link>
             <Link href="/listings/rent">Rent</Link>
-            <Link href="/register">Sell</Link>
+            <Link href="/register/consultant">Sell</Link>
           </div>
           <form className="search-card portal-search" action="/listings">
             <div className="field-grid">
@@ -258,7 +258,7 @@ export default async function HomePage() {
             </Link>
 
             <Link
-              href="/register"
+              href="/register/consultant"
               className="hero-quick-link hero-quick-link-post"
             >
               <span className="hero-quick-link-icon" aria-hidden="true">
@@ -375,7 +375,7 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="cta-actions">
-            <Link href="/register" className="primary-nav-cta">
+            <Link href="/register/consultant" className="primary-nav-cta">
               Register free
             </Link>
             <Link href="/login" className="cta-contact-btn">

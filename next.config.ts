@@ -22,6 +22,12 @@ if (process.env.NODE_ENV === "production") {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /** Drop console.* in production builds (keeps error / warn for debugging). */
+  compiler: {
+    removeConsole: {
+      exclude: ["error", "warn"],
+    },
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
@@ -35,6 +41,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "stepsstone.in",
         pathname: "/wp-content/uploads/**",
+      },
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+        pathname: "/**",
       },
     ],
   },

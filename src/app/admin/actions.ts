@@ -20,7 +20,17 @@ import {
   sendSubmissionApprovedEmail,
   sendSubmissionRejectedEmail,
 } from "@/lib/email/submission-status-email";
+import {
+  buildListingPublishedPayload,
+  dispatchListingPublishedAutoPost,
+} from "@/lib/social/auto-post";
 import { isUploadedFile, MAX_IMAGES, saveUploadedImages, saveOwnerPortrait } from "@/lib/upload";
+
+function enqueueListingPublishedAutoPost(payload: Parameters<
+  typeof dispatchListingPublishedAutoPost
+>[0]) {
+  void dispatchListingPublishedAutoPost(payload);
+}
 
 type AuditTarget = {
   action: string;
@@ -170,6 +180,25 @@ export async function approveSubmissionAction(
         reason: emailed.reason,
       });
     }
+
+    enqueueListingPublishedAutoPost(
+      buildListingPublishedPayload({
+        listingId: newListingId,
+        submissionId: submission.id,
+        type: submission.type,
+        city: submission.city,
+        purpose: submission.purpose,
+        price: submission.price,
+        description: submission.description,
+        imageUrl: submission.imageUrl,
+        imageUrls:
+          submission.imageUrls.length > 0
+            ? submission.imageUrls
+            : [submission.imageUrl],
+        approvedAt,
+        approvedByEmail: admin.email,
+      }),
+    );
   }
 
   revalidatePath("/admin");
@@ -355,6 +384,22 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
           reason: emailed.reason,
         });
       }
+
+      enqueueListingPublishedAutoPost(
+        buildListingPublishedPayload({
+          listingId,
+          submissionId: sub.id,
+          type: sub.type,
+          city: sub.city,
+          purpose: sub.purpose,
+          price: sub.price,
+          description: sub.description,
+          imageUrl: sub.imageUrl,
+          imageUrls: sub.imageUrls.length > 0 ? sub.imageUrls : [sub.imageUrl],
+          approvedAt,
+          approvedByEmail: admin.email,
+        }),
+      );
     }
 
     revalidatePath("/listings");
@@ -362,6 +407,7 @@ export async function bulkSubmissionAction(formData: FormData): Promise<void> {
     revalidatePath("/listings/rent");
     revalidatePath("/");
     revalidatePath("/my-properties");
+    revalidatePath("/admin");
   } else if (intent === "reject") {
     const toReject = await prisma.propertySubmission.findMany({
       where: {
@@ -927,6 +973,43 @@ export async function restoreListingAction(
       targetId: listingId,
     }),
   });
+
+  if (process.env.AUTO_POST_ON_RESTORE?.trim() === "1") {
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      select: {
+        id: true,
+        sourceSubmissionId: true,
+        type: true,
+        city: true,
+        purpose: true,
+        price: true,
+        description: true,
+        image: true,
+        imageUrls: true,
+        approvedAt: true,
+      },
+    });
+    if (listing) {
+      enqueueListingPublishedAutoPost(
+        buildListingPublishedPayload({
+          listingId: listing.id,
+          submissionId: listing.sourceSubmissionId,
+          type: listing.type,
+          city: listing.city,
+          purpose: listing.purpose,
+          price: listing.price,
+          description: listing.description,
+          imageUrl: listing.image,
+          imageUrls:
+            listing.imageUrls.length > 0 ? listing.imageUrls : [listing.image],
+          approvedAt: listing.approvedAt ?? new Date(),
+          approvedByEmail: admin.email,
+        }),
+      );
+    }
+  }
+
   revalidatePath("/admin");
   revalidatePath("/listings");
   revalidatePath("/listings/buy");

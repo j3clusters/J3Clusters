@@ -55,6 +55,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
     try {
       const response = await fetch("/api/submissions", {
         method: "POST",
+        credentials: "same-origin",
         body: data,
       });
 
@@ -85,7 +86,7 @@ export function PostPropertyForm({ accountProfile = null }: PostPropertyFormProp
       setPhotoCount(0);
       setFeedback({
         text:
-          "Received. Your property is queued for verification. It must be approved before it appears publicly. Track status anytime under My properties in your consultant menu.",
+          "Received. Your property is queued for verification. It must be approved before it appears publicly. Track status anytime from My properties using the links at the top of this page.",
         ok: true,
       });
     } catch {

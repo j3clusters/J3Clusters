@@ -97,6 +97,7 @@ export const registrationSchema = z
     city: z.string().trim().min(1).max(120),
     password: z.string().min(6).max(128),
     confirmPassword: z.string().min(6).max(128),
+    accountRole: z.enum(["CONSULTANT", "MEMBER"]),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords must match.",

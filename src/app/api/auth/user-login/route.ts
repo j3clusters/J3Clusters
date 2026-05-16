@@ -24,8 +24,16 @@ export async function POST(request: Request) {
 
     const user = await prisma.appUser.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+      },
     });
-    if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+    const passwordOk =
+      user && (await bcrypt.compare(password, user.passwordHash));
+    if (!passwordOk) {
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 },
@@ -34,7 +42,11 @@ export async function POST(request: Request) {
 
     let token: string;
     try {
-      token = await signUserJwt({ sub: user.id, email: user.email });
+      token = await signUserJwt({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      });
     } catch {
       return NextResponse.json(
         {
@@ -44,7 +56,7 @@ export async function POST(request: Request) {
         { status: 503 },
       );
     }
-    const response = NextResponse.json({ ok: true });
+    const response = NextResponse.json({ ok: true, accountRole: user.role });
     response.cookies.set(USER_SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       sameSite: "lax",

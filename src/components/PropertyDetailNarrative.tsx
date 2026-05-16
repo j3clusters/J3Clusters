@@ -93,7 +93,7 @@ export function PropertyDetailListedBy({
             <dd className="consultant-contact-gated">
               <p className="meta">{CONSULTANT.contactHiddenHint}</p>
               <p className="consultant-contact-gated-actions">
-                <Link href="/register">{CONSULTANT.contactHiddenCta}</Link>
+                <Link href="/register/member">{CONSULTANT.contactHiddenCta}</Link>
                 <span aria-hidden="true"> · </span>
                 <Link href="/login">Log in</Link>
               </p>

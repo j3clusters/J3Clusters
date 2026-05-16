@@ -7,7 +7,7 @@ import { OwnerPortalNav } from "@/components/OwnerPortalNav";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
 import { formatPrice } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/require-user";
+import { requireConsultant } from "@/lib/require-user";
 import { isSubmissionEmailConfigured } from "@/lib/email/submission-status-email";
 
 function submissionStatusLabel(status: SubmissionStatus) {
@@ -35,7 +35,7 @@ function submissionStatusTone(status: SubmissionStatus): "pending" | "ok" | "err
 }
 
 export default async function MyPropertiesPage() {
-  const session = await requireUser();
+  const session = await requireConsultant();
   const user = await prisma.appUser.findUnique({
     where: { id: session.sub },
     select: { email: true },

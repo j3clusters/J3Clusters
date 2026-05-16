@@ -58,7 +58,7 @@ export function PropertyDetailFacts({
   const consultantName = item.ownerName.trim();
   const consultantPhoto = item.ownerPhotoUrl.trim();
   const returnToListingPath = `/property/${listingId}`;
-  const registerHref = `/register?next=${encodeURIComponent(returnToListingPath)}`;
+  const registerHref = `/register/member?next=${encodeURIComponent(returnToListingPath)}`;
   const loginHref = `/login?next=${encodeURIComponent(returnToListingPath)}`;
 
   const overviewFacts: Fact[] = [

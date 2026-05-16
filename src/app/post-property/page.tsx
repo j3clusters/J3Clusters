@@ -3,10 +3,10 @@ import { OwnerPortalNav } from "@/components/OwnerPortalNav";
 import { PostPropertyForm } from "@/components/PostPropertyForm";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/require-user";
+import { requireConsultant } from "@/lib/require-user";
 
 export default async function PostPropertyPage() {
-  const session = await requireUser({ redirect: "/register" });
+  const session = await requireConsultant();
   const user = await prisma.appUser.findUnique({
     where: { id: session.sub },
     select: { name: true, email: true, phone: true, city: true },

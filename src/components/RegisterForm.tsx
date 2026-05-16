@@ -3,7 +3,14 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function RegisterForm() {
+export type AccountRoleParam = "CONSULTANT" | "MEMBER";
+
+type RegisterFormProps = {
+  accountRole: AccountRoleParam;
+  successRedirect: string;
+};
+
+export function RegisterForm({ accountRole, successRedirect }: RegisterFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -27,6 +34,7 @@ export function RegisterForm() {
           city: String(data.get("city") ?? ""),
           password: String(data.get("password") ?? ""),
           confirmPassword: String(data.get("confirmPassword") ?? ""),
+          accountRole,
         }),
       });
 
@@ -38,10 +46,12 @@ export function RegisterForm() {
       }
 
       form.reset();
-      setMessage(
-        "Registration successful. You can now post properties as a property consultant. Your contact details will prefill on the listing form.",
-      );
-      setTimeout(() => router.push("/post-property"), 700);
+      const okDetail =
+        accountRole === "CONSULTANT"
+          ? "You can now post properties as a property consultant. Your contact details will prefill on the listing form."
+          : "You can browse listings and reveal consultant mobile numbers anytime you’re signed in.";
+      setMessage(`Registration successful. ${okDetail}`);
+      setTimeout(() => router.push(successRedirect), 700);
     } catch {
       setMessage("Network error. Please try again.");
     } finally {

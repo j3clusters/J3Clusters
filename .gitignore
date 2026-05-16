@@ -8,6 +8,11 @@
 /.next
 /out
 
+# Tool caches
+.turbo
+.eslintcache
+coverage
+
 # Vercel CLI link metadata (machine-local)
 .vercel
 

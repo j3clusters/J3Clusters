@@ -57,10 +57,58 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${base}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.45,
+    },
+    {
+      url: `${base}/faq`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.45,
+    },
+    {
+      url: `${base}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.35,
+    },
+    {
+      url: `${base}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+      priority: 0.35,
+    },
+    {
       url: `${base}/register`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.4,
+    },
+    {
+      url: `${base}/register/consultant`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.42,
+    },
+    {
+      url: `${base}/register/member`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.42,
+    },
+    {
+      url: `${base}/community/consultant`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.35,
+    },
+    {
+      url: `${base}/community/member`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.35,
     },
     {
       url: `${base}/login`,

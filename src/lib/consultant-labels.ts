@@ -18,3 +18,20 @@ export const CONSULTANT = {
     "Register as a community member to view the consultant mobile number.",
   contactHiddenCta: "Join as community member",
 } as const;
+
+export const COMMUNITY_MEMBER = {
+  role: "Community member",
+  badge: "Community member",
+  hubTitle: "Member hub",
+  hubSub:
+    "Access consultant phone numbers while you browse and keep your property search moving without friction.",
+  registerTitle: "Register as a community member",
+  registerSub:
+    "Create a free account to unlock consultant phone numbers on verified listings as you buy or rent.",
+} as const;
+
+export const CONSULTANT_COMMUNITY = {
+  title: "Consultant community",
+  sub:
+    "List verified properties, collaborate with serious buyers and tenants, and manage submissions from one portal.",
+} as const;

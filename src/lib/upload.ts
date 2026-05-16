@@ -1,5 +1,6 @@
 import "server-only";
 
+import { put } from "@vercel/blob";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -36,6 +37,50 @@ export type SaveImagesResult =
   | { ok: true; paths: string[] }
   | { ok: false; error: string; paths: string[] };
 
+/**
+ * Persist an optimized WebP buffer. Uses Vercel Blob when
+ * `BLOB_READ_WRITE_TOKEN` is set (required on Vercel serverless); otherwise
+ * writes under `public/uploads` for local / VPS hosting.
+ */
+export async function persistWebpPublicUrl(
+  filename: string,
+  buffer: Buffer,
+): Promise<SaveImageResult> {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  if (token) {
+    try {
+      const blob = await put(`properties/${filename}`, buffer, {
+        access: "public",
+        token,
+        contentType: "image/webp",
+      });
+      return { ok: true, path: blob.url };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Cloud storage upload failed.";
+      return { ok: false, error: message };
+    }
+  }
+
+  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  try {
+    if (process.env.VERCEL) {
+      return {
+        ok: false,
+        error:
+          "Photo storage is not configured for this deployment. Ask the administrator to enable Vercel Blob and set BLOB_READ_WRITE_TOKEN on the project.",
+      };
+    }
+    const fullPath = path.join(UPLOAD_DIR, filename);
+    await fs.writeFile(fullPath, buffer);
+    return { ok: true, path: `${PUBLIC_PREFIX}/${filename}` };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save image to disk.";
+    return { ok: false, error: message };
+  }
+}
+
 export function isUploadedFile(value: FormDataEntryValue | null): value is File {
   return (
     !!value &&
@@ -60,8 +105,6 @@ export async function saveUploadedImage(
     return { ok: false, error: `Unsupported file type: ${file.type || "unknown"}.` };
   }
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
     const optimized = await sharp(inputBuffer, { failOn: "none" })
@@ -76,10 +119,7 @@ export async function saveUploadedImage(
       .toBuffer();
 
     const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}.webp`;
-    const fullPath = path.join(UPLOAD_DIR, filename);
-    await fs.writeFile(fullPath, optimized);
-
-    return { ok: true, path: `${PUBLIC_PREFIX}/${filename}` };
+    return persistWebpPublicUrl(filename, optimized);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to process image.";
     return { ok: false, error: message };
@@ -100,8 +140,6 @@ export async function saveOwnerPortrait(
     return { ok: false, error: `Unsupported file type: ${file.type || "unknown"}.` };
   }
 
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
   try {
     const inputBuffer = Buffer.from(await file.arrayBuffer());
     const optimized = await sharp(inputBuffer, { failOn: "none" })
@@ -116,10 +154,7 @@ export async function saveOwnerPortrait(
       .toBuffer();
 
     const filename = `owner-${Date.now()}-${crypto.randomBytes(8).toString("hex")}.webp`;
-    const fullPath = path.join(UPLOAD_DIR, filename);
-    await fs.writeFile(fullPath, optimized);
-
-    return { ok: true, path: `${PUBLIC_PREFIX}/${filename}` };
+    return persistWebpPublicUrl(filename, optimized);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to process image.";
     return { ok: false, error: message };

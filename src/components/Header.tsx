@@ -5,16 +5,20 @@ import { USER_SESSION_COOKIE_NAME } from "@/lib/auth/jwt-cookies";
 import { verifyUserJwt } from "@/lib/auth/verify-session-token";
 import { UserLogoutButton } from "@/components/UserLogoutButton";
 import {
+  buildMailtoInquiryHref,
+  getSiteContactEmail,
+} from "@/lib/site-social";
+import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,
 } from "@/lib/site-contact";
+import { effectiveAccountRole } from "@/lib/user-session-role";
 
 export async function Header() {
   const token = (await cookies()).get(USER_SESSION_COOKIE_NAME)?.value;
-  let isConsultant = false;
+  let session: Awaited<ReturnType<typeof verifyUserJwt>> | null = null;
   try {
-    const session = await verifyUserJwt(token);
-    isConsultant = Boolean(session);
+    session = await verifyUserJwt(token);
   } catch (err) {
     console.error(
       "[Header] User session check failed — set ADMIN_JWT_SECRET and USER_JWT_SECRET (32+ chars each) on the host:",
@@ -22,7 +26,10 @@ export async function Header() {
     );
   }
 
+  const role = effectiveAccountRole(session);
+
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
+  const mailHref = buildMailtoInquiryHref(getSiteContactEmail());
 
   return (
     <header className="site-header">
@@ -33,9 +40,18 @@ export async function Header() {
             selling
           </span>
           <span className="top-strip-links">
-            {!isConsultant ? (
-              <Link href="/register">Register</Link>
+            {!session ? (
+              <>
+                <Link href="/register">Register</Link>
+                <span className="top-strip-sep" aria-hidden="true">
+                  |
+                </span>
+                <Link href="/community/member">Members</Link>
+              </>
             ) : null}
+            <a href={mailHref} className="top-strip-email">
+              Email
+            </a>
             <a
               href={whatsappHref}
               className="top-strip-whatsapp"
@@ -71,13 +87,18 @@ export async function Header() {
               <Link href="/listings/rent">Rent</Link>
             </li>
             <li>
-              <Link href={isConsultant ? "/post-property" : "/register"}>Sell</Link>
+              <Link
+                href={
+                  role === "CONSULTANT"
+                    ? "/post-property"
+                    : "/register/consultant"
+                }
+              >
+                Sell
+              </Link>
             </li>
-            {isConsultant ? (
+            {role === "CONSULTANT" ? (
               <>
-                <li>
-                  <Link href="/my-properties">My properties</Link>
-                </li>
                 <li>
                   <Link href="/post-property" className="primary-nav-cta">
                     Post property
@@ -87,10 +108,22 @@ export async function Header() {
                   <UserLogoutButton className="header-logout-btn" />
                 </li>
               </>
+            ) : role === "MEMBER" ? (
+              <>
+                <li>
+                  <Link href="/community/member">Member hub</Link>
+                </li>
+                <li>
+                  <UserLogoutButton className="header-logout-btn" />
+                </li>
+              </>
             ) : (
               <>
                 <li>
-                  <Link href="/register">Register</Link>
+                  <Link href="/community/consultant">Consultants</Link>
+                </li>
+                <li>
+                  <Link href="/register">Join</Link>
                 </li>
                 <li>
                   <Link href="/login" className="muted-link">
@@ -98,8 +131,11 @@ export async function Header() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/register" className="primary-nav-cta">
-                    Post property free
+                  <Link
+                    href={`/login?next=${encodeURIComponent("/post-property")}`}
+                    className="primary-nav-cta"
+                  >
+                    Post property
                   </Link>
                 </li>
               </>

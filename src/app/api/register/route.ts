@@ -25,10 +25,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const { name, email, phone, city, password } = parsed.data;
+  const { name, email, phone, city, password, accountRole } = parsed.data;
   const normalizedEmail = email.trim().toLowerCase();
 
-  let user: { id: string; email: string };
+  let user: { id: string; email: string; role: "CONSULTANT" | "MEMBER" };
   try {
     const existing = await prisma.appUser.findUnique({
       where: { email: normalizedEmail },
@@ -49,8 +49,9 @@ export async function POST(request: Request) {
         phone,
         city,
         passwordHash,
+        role: accountRole,
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
   } catch (error) {
     if (
@@ -71,7 +72,11 @@ export async function POST(request: Request) {
 
   let token: string;
   try {
-    token = await signUserJwt({ sub: user.id, email: user.email });
+    token = await signUserJwt({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
   } catch {
     await prisma.appUser.delete({ where: { id: user.id } }).catch(() => {});
     return NextResponse.json(

@@ -1,13 +1,17 @@
 import Link from "next/link";
 
+import { SocialLinks } from "@/components/SocialLinks";
 import {
   buildWhatsAppUrl,
   SITE_GENERAL_WHATSAPP_MESSAGE,
   SITE_WHATSAPP,
 } from "@/lib/site-contact";
+import { buildMailtoInquiryHref, getSiteContactEmail } from "@/lib/site-social";
 
 export function Footer() {
   const whatsappHref = buildWhatsAppUrl(SITE_GENERAL_WHATSAPP_MESSAGE);
+  const email = getSiteContactEmail();
+  const mailHref = buildMailtoInquiryHref(email);
   return (
     <footer className="site-footer">
       <div className="container footer-grid">
@@ -33,19 +37,43 @@ export function Footer() {
             <Link href="/listings/rent">Rent a property</Link>
           </p>
           <p>
-            <Link href="/register">List as consultant</Link>
+            <Link href="/register/consultant">List as consultant</Link>
+          </p>
+          <p>
+            <Link href="/register/member">Join as member</Link>
+          </p>
+        </div>
+        <div>
+          <p className="footer-heading">Company</p>
+          <p>
+            <Link href="/about">About us</Link>
+          </p>
+          <p>
+            <Link href="/faq">FAQ</Link>
+          </p>
+          <p>
+            <Link href="/privacy">Privacy policy</Link>
+          </p>
+          <p>
+            <Link href="/terms">Terms &amp; conditions</Link>
           </p>
         </div>
         <div>
           <p className="footer-heading">Consultants</p>
           <p>
-            <Link href="/register">Register free</Link>
+            <Link href="/community/consultant">Consultant community</Link>
+          </p>
+          <p>
+            <Link href="/register/consultant">Register free</Link>
           </p>
           <p>
             <Link href="/login">Consultant login</Link>
           </p>
           <p>
             <Link href="/contact">Contact us</Link>
+          </p>
+          <p>
+            <a href={mailHref}>Email ({email})</a>
           </p>
           <p>
             <a
@@ -59,6 +87,12 @@ export function Footer() {
           <p>
             <Link href="/admin/login">Admin login</Link>
           </p>
+        </div>
+      </div>
+      <div className="footer-social-band">
+        <div className="container footer-social-band-inner">
+          <p className="footer-social-title">Follow &amp; connect</p>
+          <SocialLinks variant="footer" />
         </div>
       </div>
       <div className="container footer-bottom">

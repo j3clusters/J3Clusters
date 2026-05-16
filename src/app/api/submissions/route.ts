@@ -1,14 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import sharp from "sharp";
 
 import { USER_SESSION_COOKIE_NAME, verifyUserJwt } from "@/lib/auth/session";
+import { effectiveAccountRole } from "@/lib/user-session-role";
 import { withListingPurpose } from "@/lib/listing-purpose";
 import { prisma } from "@/lib/prisma";
-import { saveOwnerPortrait } from "@/lib/upload";
+import { persistWebpPublicUrl, saveOwnerPortrait } from "@/lib/upload";
 import { propertySubmissionSchema } from "@/lib/validators";
 
 const MAX_IMAGES = 10;
@@ -21,6 +20,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Please login to post property." },
       { status: 401 },
+    );
+  }
+
+  if (effectiveAccountRole(session) !== "CONSULTANT") {
+    return NextResponse.json(
+      { error: "Only property consultant accounts can submit listings." },
+      { status: 403 },
     );
   }
 
@@ -46,9 +52,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   const imageUrls: string[] = [];
   for (const image of images) {
     if (!image.type.startsWith("image/")) {
@@ -65,7 +68,6 @@ export async function POST(request: Request) {
     }
 
     const fileName = `${Date.now()}-${randomUUID()}.webp`;
-    const filePath = path.join(uploadDir, fileName);
     const buffer = Buffer.from(await image.arrayBuffer());
     let optimizedBuffer: Buffer;
     try {
@@ -74,7 +76,6 @@ export async function POST(request: Request) {
         .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
         .webp({ quality: 80, effort: 4 })
         .toBuffer();
-      await writeFile(filePath, optimizedBuffer);
     } catch (error) {
       console.error("[submissions] Image processing failed:", error);
       return NextResponse.json(
@@ -85,7 +86,13 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    imageUrls.push(`/uploads/${fileName}`);
+
+    const stored = await persistWebpPublicUrl(fileName, optimizedBuffer);
+    if (!stored.ok) {
+      console.error("[submissions] Image storage failed:", stored.error);
+      return NextResponse.json({ error: stored.error }, { status: 503 });
+    }
+    imageUrls.push(stored.path);
   }
 
   const ownerPhotoField = formData.get("ownerPhoto");

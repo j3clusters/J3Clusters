@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import "@/app/globals.css";
 import { Footer } from "@/components/Footer";
@@ -19,6 +19,12 @@ export const metadata: Metadata = {
     locale: "en_IN",
     siteName: "J3 Clusters",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

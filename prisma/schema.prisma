@@ -38,6 +38,11 @@ enum ListingPurpose {
   Rent
 }
 
+enum AppUserRole {
+  CONSULTANT
+  MEMBER
+}
+
 model Listing {
   id               String          @id @default(cuid())
   /// When published from an owner submission, links back for owner dashboard.
@@ -128,11 +133,12 @@ model AdminUser {
 }
 
 model AppUser {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String      @unique
   phone        String
   city         String
+  role         AppUserRole @default(CONSULTANT)
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

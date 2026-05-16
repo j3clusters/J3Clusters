@@ -12,7 +12,7 @@ type PageProps = {
 export default async function RentListingsPage(props: PageProps) {
   const searchParams = await props.searchParams;
   if ((searchParams.mode ?? "").toLowerCase() === "sell") {
-    redirect("/register");
+    redirect("/register/consultant");
   }
   return <ListingsShell purposeRoute="rent" searchParams={searchParams} />;
 }

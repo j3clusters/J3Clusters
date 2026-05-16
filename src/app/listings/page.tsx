@@ -36,7 +36,7 @@ function redirectPreservingFilters(
 export default async function ListingsPage(props: PageProps) {
   const searchParams = await props.searchParams;
   if ((searchParams.mode ?? "").toLowerCase() === "sell") {
-    redirect("/register");
+    redirect("/register/consultant");
   }
 
   const mode = (searchParams.mode ?? "").toLowerCase();

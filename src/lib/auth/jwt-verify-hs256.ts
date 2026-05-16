@@ -24,11 +24,13 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return diff === 0;
 }
 
-/** Verify a compact HS256 JWT and return `sub` + `email` claims (Edge-safe). */
+export type VerifiedJwtAccountRole = "CONSULTANT" | "MEMBER";
+
+/** Verify a compact HS256 JWT and return `sub` + `email` (+ optional community `role`). Edge-safe. */
 export async function verifyJwtHs256Claims(
   token: string,
   secretBytes: Uint8Array,
-): Promise<{ sub: string; email: string } | null> {
+): Promise<{ sub: string; email: string; role?: VerifiedJwtAccountRole } | null> {
   const parts = token.split(".");
   if (parts.length !== 3) {
     return null;
@@ -91,5 +93,11 @@ export async function verifyJwtHs256Claims(
     return null;
   }
 
-  return { sub, email };
+  let role: VerifiedJwtAccountRole | undefined;
+  const rawRole = payload.role;
+  if (rawRole === "MEMBER" || rawRole === "CONSULTANT") {
+    role = rawRole;
+  }
+
+  return role === undefined ? { sub, email } : { sub, email, role };
 }
